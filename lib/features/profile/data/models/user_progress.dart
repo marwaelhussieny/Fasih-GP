@@ -1,58 +1,47 @@
-// lib/features/profile/domain/entities/user_progress_entity.dart
+// lib/features/profile/data/models/user_progress_model.dart
 
-import 'package:equatable/equatable.dart';
+import 'package:grad_project/features/profile/domain/entities/user_progress_entity.dart';
 
-class UserProgressEntity extends Equatable {
-  final int totalLessonsCompleted;
-  final int totalCorrectAnswers;
-  final int totalPoints;
-  final int currentStreak; // NEW: Added for ProfileScreen
-  final int completedTasks; // NEW: Added for ProfileScreen (assuming tasks are different from lessons)
-
-  const UserProgressEntity({
-    this.totalLessonsCompleted = 0,
-    this.totalCorrectAnswers = 0,
-    this.totalPoints = 0,
-    this.currentStreak = 0, // Default value
-    this.completedTasks = 0, // Default value
+class UserProgressModel extends UserProgressEntity {
+  const UserProgressModel({
+    super.totalWords,
+    super.learnedCount,
+    super.favoriteCount,
+    super.easyCount,
+    super.mediumCount,
+    super.hardCount,
   });
 
-  factory UserProgressEntity.fromMap(Map<String, dynamic> map) {
-    return UserProgressEntity(
-      totalLessonsCompleted: map['totalLessonsCompleted'] as int? ?? 0,
-      totalCorrectAnswers: map['totalCorrectAnswers'] as int? ?? 0,
-      totalPoints: map['totalPoints'] as int? ?? 0,
-      currentStreak: map['currentStreak'] as int? ?? 0, // Read from map
-      completedTasks: map['completedTasks'] as int? ?? 0, // Read from map
+  factory UserProgressModel.fromMap(Map<String, dynamic> json) {
+    return UserProgressModel(
+      totalWords: json['totalWords'] as int? ?? 0,
+      learnedCount: json['learnedCount'] as int? ?? 0,
+      favoriteCount: json['favoriteCount'] as int? ?? 0,
+      easyCount: json['easyCount'] as int? ?? 0,
+      mediumCount: json['mediumCount'] as int? ?? 0,
+      hardCount: json['hardCount'] as int? ?? 0,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'totalLessonsCompleted': totalLessonsCompleted,
-      'totalCorrectAnswers': totalCorrectAnswers,
-      'totalPoints': totalPoints,
-      'currentStreak': currentStreak, // Add to map
-      'completedTasks': completedTasks, // Add to map
+      'totalWords': totalWords,
+      'learnedCount': learnedCount,
+      'favoriteCount': favoriteCount,
+      'easyCount': easyCount,
+      'mediumCount': mediumCount,
+      'hardCount': hardCount,
     };
   }
 
-  factory UserProgressEntity.empty() {
-    return const UserProgressEntity(
-      totalLessonsCompleted: 0,
-      totalCorrectAnswers: 0,
-      totalPoints: 0,
-      currentStreak: 0,
-      completedTasks: 0,
+  UserProgressEntity toEntity() {
+    return UserProgressEntity(
+      totalWords: totalWords,
+      learnedCount: learnedCount,
+      favoriteCount: favoriteCount,
+      easyCount: easyCount,
+      mediumCount: mediumCount,
+      hardCount: hardCount,
     );
   }
-
-  @override
-  List<Object?> get props => [
-    totalLessonsCompleted,
-    totalCorrectAnswers,
-    totalPoints,
-    currentStreak,
-    completedTasks,
-  ];
 }

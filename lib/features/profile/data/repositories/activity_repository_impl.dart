@@ -1,90 +1,75 @@
 // lib/features/profile/data/repositories/activity_repository_impl.dart
 
+import 'package:grad_project/core/services/auth_service.dart';
 import 'package:grad_project/features/profile/domain/entities/daily_activity_entity.dart';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart';
-import 'package:grad_project/features/profile/domain/entities/user_progress_entity.dart';
 import 'package:grad_project/features/profile/domain/repositories/activity_repository.dart';
-import 'package:grad_project/features/profile/domain/repositories/user_repository.dart';
-import 'package:uuid/uuid.dart'; // Import uuid package for generating unique IDs
+import 'package:grad_project/features/profile/data/datasources/activity_remote_data_source.dart';
+import 'package:flutter/foundation.dart';
 
 class ActivityRepositoryImpl implements ActivityRepository {
-  final UserRepository userRepository;
-  final Uuid _uuid; // Instance of Uuid for generating IDs
+  final ActivityRemoteDataSource remoteDataSource;
+  final AuthService authService;
 
-  ActivityRepositoryImpl(this.userRepository) : _uuid = const Uuid(); // Initialize Uuid
+  ActivityRepositoryImpl({
+    required this.remoteDataSource,
+    required this.authService,
+  });
+
+  bool get _isAuthenticated {
+    return authService.isLoggedIn();
+  }
 
   @override
   Future<List<DailyActivityEntity>> getWeeklyLessonsData() async {
-    final currentUser = userRepository.getCurrentFirebaseUser();
-    if (currentUser == null) {
-      throw Exception('No authenticated user to get weekly lessons data.');
+    debugPrint('ActivityRepository: getWeeklyLessonsData called');
+
+    if (!_isAuthenticated) {
+      throw Exception('User not authenticated to get weekly lessons data.');
     }
 
-    final userProfile = await userRepository.getUserProfile(currentUser.uid);
-    if (userProfile == null) {
-      return [];
+    try {
+      final activities = await remoteDataSource.getWeeklyActivities();
+      debugPrint('ActivityRepository: Retrieved ${activities.length} weekly activities');
+
+      // Sort by date for consistent display (oldest to newest)
+      activities.sort((a, b) => a.date.compareTo(b.date));
+
+      return activities;
+    } catch (e) {
+      debugPrint('ActivityRepository: Error getting weekly lessons data: $e');
+      rethrow;
     }
-
-    final now = DateTime.now();
-    // Get the start of 7 days ago (inclusive of today)
-    final sevenDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-
-    List<DailyActivityEntity> weeklyActivities = [];
-
-    // Iterate through dailyActivities as a List
-    final dailyActivities = userProfile.dailyActivities; // It's already a List
-
-    for (var activity in dailyActivities) {
-      // Normalize activity date to start of day for accurate comparison
-      final activityDateNormalized = DateTime(activity.date.year, activity.date.month, activity.date.day);
-      if (activityDateNormalized.isAfter(sevenDaysAgo.subtract(const Duration(days: 1))) &&
-          activityDateNormalized.isBefore(now.add(const Duration(days: 1)))) {
-        weeklyActivities.add(activity);
-      }
-    }
-
-    // Sort by date for consistent display (oldest to newest)
-    weeklyActivities.sort((a, b) => a.date.compareTo(b.date));
-
-    return weeklyActivities;
   }
 
   @override
   Future<Map<String, int>> getDailyAchievements() async {
-    final currentUser = userRepository.getCurrentFirebaseUser();
-    if (currentUser == null) {
-      throw Exception('No authenticated user to get daily achievements.');
+    debugPrint('ActivityRepository: getDailyAchievements called');
+
+    if (!_isAuthenticated) {
+      throw Exception('User not authenticated to get daily achievements.');
     }
 
-    final userProfile = await userRepository.getUserProfile(currentUser.uid);
-    if (userProfile == null) {
+    try {
+      final achievements = await remoteDataSource.getTodayAchievements();
+      debugPrint('ActivityRepository: Retrieved daily achievements: $achievements');
+
+      // Ensure all expected keys are present with default values
+      return {
+        'lessonsCompleted': achievements['lessonsCompleted'] ?? 0,
+        'correctAnswers': achievements['correctAnswers'] ?? 0,
+        'pointsEarned': achievements['pointsEarned'] ?? 0,
+        'timeSpentMinutes': achievements['timeSpentMinutes'] ?? 0,
+      };
+    } catch (e) {
+      debugPrint('ActivityRepository: Error getting daily achievements: $e');
+      // Return default values in case of error
       return {
         'lessonsCompleted': 0,
         'correctAnswers': 0,
         'pointsEarned': 0,
-        'timeSpentMinutes': 0, // Include timeSpentMinutes
+        'timeSpentMinutes': 0,
       };
     }
-
-    final today = DateTime.now();
-    DailyActivityEntity? dailyActivity;
-
-    // Iterate through dailyActivities as a List to find today's activity
-    for (var activity in userProfile.dailyActivities) {
-      if (activity.date.year == today.year &&
-          activity.date.month == today.month &&
-          activity.date.day == today.day) {
-        dailyActivity = activity;
-        break;
-      }
-    }
-
-    return {
-      'lessonsCompleted': dailyActivity?.completedLessons ?? 0,
-      'correctAnswers': dailyActivity?.correctAnswers ?? 0,
-      'pointsEarned': dailyActivity?.pointsEarned ?? 0,
-      'timeSpentMinutes': dailyActivity?.timeSpentMinutes ?? 0, // Return timeSpentMinutes
-    };
   }
 
   @override
@@ -92,84 +77,77 @@ class ActivityRepositoryImpl implements ActivityRepository {
     required int lessonsCompleted,
     required int correctAnswers,
     required int pointsEarned,
-    int timeSpentMinutes = 0, // FIX: Added timeSpentMinutes parameter to match interface
+    int timeSpentMinutes = 0,
+    List<String> newAchievements = const [],
   }) async {
-    final currentUser = userRepository.getCurrentFirebaseUser();
-    if (currentUser == null) {
-      throw Exception('No authenticated user to add daily activity.');
+    debugPrint('ActivityRepository: addDailyActivity called with: lessons=$lessonsCompleted, answers=$correctAnswers, points=$pointsEarned, time=$timeSpentMinutes');
+
+    if (!_isAuthenticated) {
+      throw Exception('User not authenticated to add daily activity.');
     }
 
-    UserEntity? userProfile = await userRepository.getUserProfile(currentUser.uid);
-    if (userProfile == null) {
-      // If user profile doesn't exist, create a basic one.
-      await userRepository.createUserProfile(
-          currentUser.uid,
-          currentUser.email ?? '',
-          currentUser.displayName ?? 'User'
+    try {
+      final activity = DailyActivityEntity(
+        date: DateTime.now(),
+        completedLessons: lessonsCompleted,
+        correctAnswers: correctAnswers,
+        pointsEarned: pointsEarned,
+        timeSpentMinutes: timeSpentMinutes,
+        achievements: newAchievements,
       );
-      userProfile = await userRepository.getUserProfile(currentUser.uid); // Re-fetch after creation
-      if (userProfile == null) {
-        throw Exception('Failed to create or retrieve user profile for activity.');
-      }
+
+      await remoteDataSource.addDailyActivity(activity);
+      debugPrint('ActivityRepository: Daily activity added successfully');
+    } catch (e) {
+      debugPrint('ActivityRepository: Error adding daily activity: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DailyActivityEntity?> getTodayActivity() async {
+    debugPrint('ActivityRepository: getTodayActivity called');
+
+    if (!_isAuthenticated) {
+      throw Exception('User not authenticated to get today\'s activity.');
     }
 
-    final today = DateTime.now();
-    // Normalize today's date to start of day for consistent matching
-    final todayNormalized = DateTime(today.year, today.month, today.day);
+    try {
+      final activity = await remoteDataSource.getTodayActivity();
+      debugPrint('ActivityRepository: Retrieved today\'s activity: ${activity?.id}');
+      return activity;
+    } catch (e) {
+      debugPrint('ActivityRepository: Error getting today\'s activity: $e');
+      return null;
+    }
+  }
 
-    int existingActivityIndex = -1;
-    DailyActivityEntity? existingActivity;
+  @override
+  Future<List<DailyActivityEntity>> getActivitiesInRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    debugPrint('ActivityRepository: getActivitiesInRange called from $startDate to $endDate');
 
-    // Find if an activity for today already exists in the list
-    for (int i = 0; i < userProfile.dailyActivities.length; i++) {
-      final activity = userProfile.dailyActivities[i];
-      final activityDateNormalized = DateTime(activity.date.year, activity.date.month, activity.date.day);
-      if (activityDateNormalized.isAtSameMomentAs(todayNormalized)) {
-        existingActivity = activity;
-        existingActivityIndex = i;
-        break;
-      }
+    if (!_isAuthenticated) {
+      throw Exception('User not authenticated to get activities in range.');
     }
 
-    final updatedActivity = DailyActivityEntity(
-      // If updating existing, use its ID. Otherwise, generate a new one.
-      id: existingActivity?.id ?? _uuid.v4(),
-      date: todayNormalized, // Store normalized date
-      completedLessons: (existingActivity?.completedLessons ?? 0) + lessonsCompleted,
-      correctAnswers: (existingActivity?.correctAnswers ?? 0) + correctAnswers,
-      pointsEarned: (existingActivity?.pointsEarned ?? 0) + pointsEarned,
-      timeSpentMinutes: (existingActivity?.timeSpentMinutes ?? 0) + timeSpentMinutes, // Add new time
-      achievements: existingActivity?.achievements ?? [], // Preserve existing achievements
-    );
+    try {
+      final activities = await remoteDataSource.getActivitiesInRange(
+        startDate: startDate,
+        endDate: endDate,
+      );
 
-    // Create a mutable copy of the dailyActivities list
-    final List<DailyActivityEntity> updatedDailyActivities = List.from(userProfile.dailyActivities);
+      debugPrint('ActivityRepository: Retrieved ${activities.length} activities in range');
 
-    if (existingActivityIndex != -1) {
-      // Update existing activity in the list
-      updatedDailyActivities[existingActivityIndex] = updatedActivity;
-    } else {
-      // Add new activity to the list
-      updatedDailyActivities.add(updatedActivity);
+      // Sort by date for consistent display
+      activities.sort((a, b) => a.date.compareTo(b.date));
+
+      return activities;
+    } catch (e) {
+      debugPrint('ActivityRepository: Error getting activities in range: $e');
+      rethrow;
     }
-
-    // Update user progress
-    final UserProgressEntity currentProgress = userProfile.progress; // progress is now non-nullable
-
-    final updatedProgress = UserProgressEntity(
-      totalLessonsCompleted: currentProgress.totalLessonsCompleted + lessonsCompleted,
-      totalCorrectAnswers: currentProgress.totalCorrectAnswers + correctAnswers,
-      totalPoints: currentProgress.totalPoints + pointsEarned,
-      currentStreak: currentProgress.currentStreak, // Preserve existing streak
-      completedTasks: currentProgress.completedTasks, // Preserve existing completed tasks
-    );
-
-    // Create a new UserEntity with updated activities and progress
-    final updatedUserProfile = userProfile.copyWith(
-      dailyActivities: updatedDailyActivities,
-      progress: updatedProgress,
-    );
-
-    await userRepository.updateUserProfile(updatedUserProfile);
   }
 }

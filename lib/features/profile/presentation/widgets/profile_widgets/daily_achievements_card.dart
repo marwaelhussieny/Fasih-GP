@@ -16,14 +16,20 @@ class DailyAchievementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: isDark
+                ? Colors.black.withOpacity(0.5)
+                : Colors.black.withOpacity(0.08),
             spreadRadius: 0,
             blurRadius: 20,
             offset: const Offset(0, 4),
@@ -33,15 +39,16 @@ class DailyAchievementsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(theme),
           SizedBox(height: 20.h),
-          _buildAchievementsList(),
+          _buildAchievementsList(context),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme) {
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
     return Row(
       children: [
         Icon(
@@ -53,11 +60,11 @@ class DailyAchievementsCard extends StatelessWidget {
         Expanded(
           child: Text(
             'إنجازات اليوم (${DateFormat('d MMMM', 'ar').format(selectedDay ?? DateTime.now())})',
-            style: TextStyle(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontFamily: 'Tajawal',
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
+              color: textColor,
             ),
           ),
         ),
@@ -65,47 +72,47 @@ class DailyAchievementsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementsList() {
+  Widget _buildAchievementsList(BuildContext context) {
     return Consumer<ActivityProvider>(
       builder: (context, activityProvider, child) {
         if (activityProvider.isLoadingAchievements) {
-          return _buildLoadingState();
+          return _buildLoadingState(context);
         }
 
         if (activityProvider.error != null) {
-          return _buildErrorState();
+          return _buildErrorState(context);
         }
 
         // Convert Map<String, int> to List<String> for achievements
-        // If the map contains achievement descriptions as keys, use those
-        // Otherwise, create formatted strings from the key-value pairs
         final List<String> achievements = activityProvider.dailyAchievements.entries
             .map((entry) => entry.key.contains(':') || entry.key.contains('أ')
-            ? entry.key // If it's already a description in Arabic
-            : '${entry.key}: ${entry.value} نقطة') // Otherwise format it
+            ? entry.key
+            : '${entry.key}: ${entry.value} نقطة')
             .toList();
 
         if (achievements.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
-        return _buildAchievementsContent(achievements);
+        return _buildAchievementsContent(context, achievements);
       },
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
       height: 100.h,
-      child: const Center(
+      child: Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFE67E22),
+          color: theme.primaryColor,
         ),
       ),
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
       height: 100.h,
       child: Center(
@@ -120,7 +127,7 @@ class DailyAchievementsCard extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               'خطأ في تحميل الإنجازات',
-              style: TextStyle(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 fontFamily: 'Tajawal',
                 fontSize: 14.sp,
                 color: Colors.red.shade600,
@@ -132,15 +139,21 @@ class DailyAchievementsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyMedium?.color ?? Colors.grey;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 40.h),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: theme.brightness == Brightness.dark
+            ? Colors.grey.shade900.withOpacity(0.6)
+            : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: theme.brightness == Brightness.dark
+              ? Colors.grey.shade800
+              : Colors.grey.shade200,
           width: 1,
         ),
       ),
@@ -149,7 +162,7 @@ class DailyAchievementsCard extends StatelessWidget {
           Icon(
             Icons.sentiment_neutral_outlined,
             size: 48.r,
-            color: Colors.grey.shade400,
+            color: textColor.withOpacity(0.4),
           ),
           SizedBox(height: 12.h),
           Text(
@@ -158,7 +171,7 @@ class DailyAchievementsCard extends StatelessWidget {
               fontFamily: 'Tajawal',
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade600,
+              color: textColor.withOpacity(0.7),
             ),
           ),
           SizedBox(height: 8.h),
@@ -167,7 +180,7 @@ class DailyAchievementsCard extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Tajawal',
               fontSize: 14.sp,
-              color: Colors.grey.shade500,
+              color: textColor.withOpacity(0.5),
             ),
           ),
         ],
@@ -175,7 +188,11 @@ class DailyAchievementsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementsContent(List<String> achievements) {
+  Widget _buildAchievementsContent(BuildContext context, List<String> achievements) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
+
     return Column(
       children: achievements.asMap().entries.map((entry) {
         final int index = entry.key;
@@ -186,7 +203,12 @@ class DailyAchievementsCard extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
+              colors: isDark
+                  ? [
+                const Color(0xFFE67E22).withOpacity(0.05),
+                Colors.grey.shade900.withOpacity(0.12),
+              ]
+                  : [
                 const Color(0xFFE67E22).withOpacity(0.1),
                 const Color(0xFFD35400).withOpacity(0.05),
               ],
@@ -201,10 +223,10 @@ class DailyAchievementsCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _buildAchievementIcon(),
+              _buildAchievementIcon(context),
               SizedBox(width: 12.w),
               Expanded(
-                child: _buildAchievementText(index, achievement),
+                child: _buildAchievementText(context, index, achievement),
               ),
               Icon(
                 Icons.check_circle,
@@ -218,13 +240,17 @@ class DailyAchievementsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementIcon() {
+  Widget _buildAchievementIcon(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: 40.w,
       height: 40.w,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE67E22), Color(0xFFD35400)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFFE67E22).withOpacity(0.6), Colors.orange.shade900]
+              : [const Color(0xFFE67E22), const Color(0xFFD35400)],
         ),
         shape: BoxShape.circle,
         boxShadow: [
@@ -244,7 +270,9 @@ class DailyAchievementsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementText(int index, String achievement) {
+  Widget _buildAchievementText(BuildContext context, int index, String achievement) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -264,7 +292,7 @@ class DailyAchievementsCard extends StatelessWidget {
             fontFamily: 'Tajawal',
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
+            color: textColor,
           ),
         ),
       ],

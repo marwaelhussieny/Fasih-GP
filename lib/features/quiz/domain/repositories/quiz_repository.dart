@@ -20,8 +20,8 @@ abstract class QuizRepository {
   Future<List<QuizResultEntity>> getUserQuizResults(String userId);
 
   // Future work for AI-generated quizzes
-  /// Generates a new quiz based on specific criteria using an AI model.
-  /// The AI model would be called through a data source in the implementation.
+  /// Generates a new quiz based on specific criteria using an AI models.
+  /// The AI models would be called through a data source in the implementation.
   Future<QuizEntity> generateQuiz({
     required String topic,
     required String difficulty,

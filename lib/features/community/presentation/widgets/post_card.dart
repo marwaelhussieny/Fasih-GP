@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-// Ensure all necessary colors are imported
-import 'package:grad_project/features/home/presentation/screens/home_screen.dart' show primaryOrange, desertSand, nightBlue, starGold, lightOrange, darkPurple, warmAmber, moonSilver;
+import 'package:grad_project/core/theme/app_theme.dart';
 
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   final String userName;
   final String communityName;
   final String userAvatar;
@@ -14,6 +13,7 @@ class PostCard extends StatelessWidget {
   final int likes;
   final int comments;
   final bool isDarkMode;
+  final String? timeAgo;
 
   const PostCard({
     Key? key,
@@ -25,188 +25,278 @@ class PostCard extends StatelessWidget {
     required this.likes,
     required this.comments,
     required this.isDarkMode,
+    this.timeAgo,
   }) : super(key: key);
+
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  bool isLiked = false;
+  int currentLikes = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    currentLikes = widget.likes;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDarkMode
-              ? [darkPurple.withOpacity(0.8), nightBlue.withOpacity(0.6)]
-              : [Colors.white, desertSand.withOpacity(0.3)],
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: isDarkMode ? starGold.withOpacity(0.3) : primaryOrange.withOpacity(0.3),
-          width: 1.5.w,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.all(16.w),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end, // Align content to the right for Arabic
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // User Info and Community
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end, // Align to right
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end, // Align text to right
-                children: [
-                  Text(
-                    userName,
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
-                      fontFamily: 'Tajawal',
-                    ),
-                  ),
-                  Text(
-                    'نشر في $communityName', // Posted in [Community Name]
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
-                      fontSize: 12.sp,
-                      fontFamily: 'Tajawal',
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(width: 12.w),
-              CircleAvatar(
-                radius: 20.r,
-                backgroundImage: NetworkImage(userAvatar),
-                backgroundColor: isDarkMode ? starGold.withOpacity(0.3) : primaryOrange.withOpacity(0.3),
-              ),
-            ],
-          ),
-          SizedBox(height: 15.h),
+          // User Info Header
+          _buildUserHeader(),
+          SizedBox(height: 12.h),
 
           // Post Content
-          Text(
-            postContent,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-              fontSize: 15.sp,
-              fontFamily: 'Tajawal',
-              height: 1.5,
-            ),
-          ),
+          _buildPostContent(),
           SizedBox(height: 10.h),
 
           // Hashtags
-          Wrap(
-            alignment: WrapAlignment.end, // Align hashtags to the right
-            spacing: 8.w,
-            runSpacing: 4.h,
-            children: hashtags.map((tag) => Text(
-              tag,
-              style: TextStyle(
-                color: isDarkMode ? lightOrange : primaryOrange,
-                fontSize: 13.sp,
-                fontFamily: 'Tajawal',
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.right,
-            )).toList(),
-          ),
-          SizedBox(height: 15.h),
+          if (widget.hashtags.isNotEmpty) _buildHashtags(),
+          SizedBox(height: 12.h),
 
-          // Actions (Likes, Comments, Share)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space
-            children: [
-              // Share Button
-              _buildActionButton(
-                icon: Icons.share_rounded,
-                label: 'نشر', // Share
-                count: null,
-                color: isDarkMode ? warmAmber : primaryOrange,
-                isDarkMode: isDarkMode,
-                onTap: () {
-                  // TODO: Implement share functionality
-                },
-              ),
-              // Likes and Comments
-              Row(
-                children: [
-                  _buildActionButton(
-                    icon: Icons.comment_rounded,
-                    label: comments.toString(),
-                    color: isDarkMode ? moonSilver : Colors.grey,
-                    isDarkMode: isDarkMode,
-                    onTap: () {
-                      // TODO: Implement view comments functionality
-                    },
-                  ),
-                  SizedBox(width: 15.w),
-                  _buildActionButton(
-                    icon: Icons.favorite_rounded,
-                    label: likes.toString(),
-                    color: isDarkMode ? Colors.redAccent : Colors.red,
-                    isDarkMode: isDarkMode,
-                    onTap: () {
-                      // TODO: Implement like functionality
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+          // Action Buttons
+          _buildActionButtons(),
         ],
       ),
     );
   }
 
+  Widget _buildUserHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                widget.userName,
+                style: TextStyle(
+                  color: widget.isDarkMode
+                      ? Colors.white
+                      : const Color(0xFF2C2C2C),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  fontFamily: 'Tajawal',
+                ),
+                textAlign: TextAlign.right,
+              ),
+              SizedBox(height: 2.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (widget.timeAgo != null) ...[
+                    Text(
+                      widget.timeAgo!,
+                      style: TextStyle(
+                        color: widget.isDarkMode
+                            ? const Color(0xFF9E9E9E)
+                            : const Color(0xFF757575),
+                        fontSize: 11.sp,
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+                    Text(
+                      ' • ',
+                      style: TextStyle(
+                        color: widget.isDarkMode
+                            ? const Color(0xFF9E9E9E)
+                            : const Color(0xFF757575),
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ],
+                  Text(
+                    'نشر في ${widget.communityName}',
+                    style: TextStyle(
+                      color: const Color(0xFFFF7F50),
+                      fontSize: 11.sp,
+                      fontFamily: 'Tajawal',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFFFF7F50).withOpacity(0.3),
+              width: 1.5.w,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 18.r,
+            backgroundImage: NetworkImage(widget.userAvatar),
+            backgroundColor: const Color(0xFFFF7F50).withOpacity(0.1),
+            onBackgroundImageError: (exception, stackTrace) {
+              // Handle image loading error
+            },
+            child: widget.userAvatar.isEmpty
+                ? Icon(
+              Icons.person,
+              color: const Color(0xFFFF7F50),
+              size: 20.r,
+            )
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPostContent() {
+    return Text(
+      widget.postContent,
+      textAlign: TextAlign.right,
+      style: TextStyle(
+        color: widget.isDarkMode
+            ? Colors.white
+            : const Color(0xFF2C2C2C),
+        fontSize: 14.sp,
+        fontFamily: 'Tajawal',
+        height: 1.5,
+        letterSpacing: 0.2,
+      ),
+    );
+  }
+
+  Widget _buildHashtags() {
+    return Container(
+      width: double.infinity,
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        spacing: 6.w,
+        runSpacing: 4.h,
+        children: widget.hashtags.map((tag) => Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF7F50).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: const Color(0xFFFF7F50).withOpacity(0.3),
+              width: 0.5.w,
+            ),
+          ),
+          child: Text(
+            tag,
+            style: TextStyle(
+              color: const Color(0xFFFF7F50),
+              fontSize: 11.sp,
+              fontFamily: 'Tajawal',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Share Button
+        _buildActionButton(
+          icon: Icons.share,
+          label: 'نشر',
+          color: widget.isDarkMode
+              ? const Color(0xFF9E9E9E)
+              : const Color(0xFF757575),
+          onTap: () {
+            // TODO: Implement share functionality
+          },
+        ),
+
+        // Likes and Comments
+        Row(
+          children: [
+            _buildActionButton(
+              icon: Icons.chat_bubble_outline,
+              label: '${widget.comments}',
+              color: widget.isDarkMode
+                  ? const Color(0xFF9E9E9E)
+                  : const Color(0xFF757575),
+              onTap: () {
+                // TODO: Implement comments functionality
+              },
+            ),
+            SizedBox(width: 12.w),
+            _buildActionButton(
+              icon: isLiked ? Icons.favorite : Icons.favorite_border,
+              label: '$currentLikes',
+              color: isLiked ? Colors.red : (widget.isDarkMode
+                  ? const Color(0xFF9E9E9E)
+                  : const Color(0xFF757575)),
+              onTap: () {
+                setState(() {
+                  if (isLiked) {
+                    currentLikes--;
+                    isLiked = false;
+                  } else {
+                    currentLikes++;
+                    isLiked = true;
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildActionButton({
     required IconData icon,
-    required String? label,
+    required String label,
     required Color color,
-    required bool isDarkMode,
     required VoidCallback onTap,
-    int? count, // Optional count for likes/comments
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: isDarkMode ? darkPurple.withOpacity(0.5) : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(15.r),
+          color: widget.isDarkMode
+              ? const Color(0xFF404040).withOpacity(0.5)
+              : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: color.withOpacity(0.3),
             width: 1.w,
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
               color: color,
-              size: 18.r,
+              size: 16.r,
             ),
-            if (label != null) ...[
-              SizedBox(width: 8.w),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                  fontSize: 13.sp,
-                  fontFamily: 'Tajawal',
-                  fontWeight: FontWeight.bold,
-                ),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? Colors.white
+                    : const Color(0xFF2C2C2C),
+                fontSize: 12.sp,
+                fontFamily: 'Tajawal',
+                fontWeight: FontWeight.w600,
               ),
-            ],
+            ),
           ],
         ),
       ),

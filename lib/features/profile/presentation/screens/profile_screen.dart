@@ -3,10 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+
 // Corrected import paths for providers based on our consolidated structure
 import 'package:grad_project/features/profile/presentation/providers/user_provider.dart';
 import 'package:grad_project/features/profile/presentation/providers/activity_provider.dart';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart';
+import 'package:grad_project/features/profile/domain/entities/profile_user_entity.dart';
+
 // FIX: Corrected import paths for individual profile widgets to reflect 'profile_widgets' subfolder
 import 'package:grad_project/features/profile/presentation/widgets/profile_widgets/profile_app_bar.dart';
 import 'package:grad_project/features/profile/presentation/widgets/profile_widgets/profile_card.dart';
@@ -42,21 +44,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final activityProvider = Provider.of<ActivityProvider>(context, listen: false);
+    final activityProvider = Provider.of<ActivityProvider>(
+      context,
+      listen: false,
+    );
 
     // Ensure user is loaded first, then activities
-    userProvider.loadUser().then((_) {
-      if (!mounted) return;
-      final String? userId = userProvider.user?.id;
-      if (userId != null) {
-        activityProvider.loadWeeklyActivities();
-        activityProvider.loadDailyAchievements(); // Always load daily for today's achievements
-      } else {
-        debugPrint("ProfileScreen: User ID not available after initial load, cannot fetch activity data.");
-      }
-    }).catchError((error) {
-      debugPrint("ProfileScreen: Error loading initial data: $error");
-    });
+    userProvider
+        .loadUser()
+        .then((_) {
+          if (!mounted) return;
+          final String? userId = userProvider.user?.id;
+          if (userId != null) {
+            activityProvider.loadWeeklyActivities();
+            activityProvider
+                .loadDailyAchievements(); // Always load daily for today's achievements
+          } else {
+            debugPrint(
+              "ProfileScreen: User ID not available after initial load, cannot fetch activity data.",
+            );
+          }
+        })
+        .catchError((error) {
+          debugPrint("ProfileScreen: Error loading initial data: $error");
+        });
   }
 
   void onDaySelected(DateTime selectedDay, DateTime focusedDay) {
@@ -72,8 +83,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // achievements for `selectedDay`, you'd need to pass `selectedDay` to its
     // `loadDailyAchievements` method or modify the use case.
     // For now, it will still show today's achievements.
-    final activityProvider = Provider.of<ActivityProvider>(context, listen: false);
-    activityProvider.loadDailyAchievements(); // This will load for today by default
+    final activityProvider = Provider.of<ActivityProvider>(
+      context,
+      listen: false,
+    );
+    activityProvider
+        .loadDailyAchievements(); // This will load for today by default
   }
 
   @override
@@ -87,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: backgroundColor, // Themed background
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
-          final UserEntity? currentUser = userProvider.user;
+          final ProfileUserEntity? currentUser = userProvider.user;
 
           // Use themed CircularProgressIndicator
           if (userProvider.isLoading && currentUser == null) {
@@ -101,7 +116,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Use ProfileErrorWidget from consolidated widgets
           if (userProvider.error != null) {
-            return ProfileErrorWidget( // Use the widget directly
+            return ProfileErrorWidget(
+              // Use the widget directly
               error: userProvider.error!,
               onRetry: () => userProvider.loadUser(),
             );
@@ -118,12 +134,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileContent(UserEntity currentUser, ThemeData theme) {
+  Widget _buildProfileContent(ProfileUserEntity currentUser, ThemeData theme) {
     return CustomScrollView(
       slivers: [
         // Use ProfileAppBar from consolidated widgets
-        ProfileAppBar(
-          onSettingsPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+        SliverToBoxAdapter(
+          child: ProfileAppBar(
+            onSettingsPressed:
+                () => Navigator.pushNamed(context, AppRoutes.settings),
+          ),
         ),
         SliverPadding(
           padding: EdgeInsets.all(16.w),
@@ -133,17 +152,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ProfileCard(user: currentUser),
               SizedBox(height: 16.h),
               // Use StatsCard from consolidated widgets
-              StatsCard(userProgress: currentUser.progress),
               SizedBox(height: 16.h),
               // Use WeeklyLessonsCard from consolidated widgets
               const WeeklyLessonsCard(),
               SizedBox(height: 16.h),
-              CalendarCard(
-                user: currentUser,
-                focusedDay: _focusedDay,
-                selectedDay: _selectedDay,
-                onDaySelected: onDaySelected,
-              ),
               SizedBox(height: 16.h),
               DailyAchievementsCard(selectedDay: _selectedDay),
               SizedBox(height: 80.h), // Extra space for bottom navigation

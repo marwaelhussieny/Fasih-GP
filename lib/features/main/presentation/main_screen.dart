@@ -1,16 +1,10 @@
-// lib/features/main/presentation/screens/main_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grad_project/features/community/presentation/screens/community_screen.dart';
-
-// Import your actual screens
+import 'package:grad_project/features/grammar/presentation/widgets/enhanced_features_menu_bottom_sheet.dart';
 import 'package:grad_project/features/home/presentation/screens/home_screen.dart';
+import 'package:grad_project/features/library/presentation/screens/library_screen.dart';
 import 'package:grad_project/features/profile/presentation/screens/profile_screen.dart';
-import 'package:grad_project/features/grammar/presentation/widgets/grammar_features_menu_bottom_sheet.dart';
-
-// Import theme colors for consistency
-import 'package:grad_project/features/home/presentation/screens/home_screen.dart' show primaryOrange, desertSand, nightBlue, starGold, darkPurple;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -19,341 +13,121 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
-  int _selectedIndex = 0;
-  late AnimationController _fabAnimationController;
-  late Animation<double> _fabAnimation;
+class _MainScreenState extends State<MainScreen> {
+  int _selectedNavIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _fabAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fabAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _fabAnimationController,
-      curve: Curves.elasticOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _fabAnimationController.dispose();
-    super.dispose();
-  }
-
-  // List of widgets to display for each tab (excluding the middle FAB)
+  // Only 4 screens: Home, Library, Community, Profile
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
-    const DummyScreen(title: 'المكتبة'),
-    const CommunityScreen(),
+    const LibraryScreen(),
+    const CommunityMainScreen(),
     const ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    // Handle the middle button (index 2) separately
-    if (index == 2) {
-      _showGrammarFeaturesMenu();
-      return;
-    }
-
-    // Adjust index for the widget list (since we removed the middle item)
-    int adjustedIndex = index > 2 ? index - 1 : index;
-
-    setState(() {
-      _selectedIndex = adjustedIndex;
-    });
+  // Map nav index (with 5 items) to screen index (with 4)
+  int get _actualScreenIndex {
+    if (_selectedNavIndex < 2) return _selectedNavIndex;
+    if (_selectedNavIndex > 2) return _selectedNavIndex - 1;
+    // _selectedNavIndex == 2 (اعرِبلي icon) should never display a screen
+    return 0;
   }
 
-  void _showGrammarFeaturesMenu() {
-    _fabAnimationController.forward().then((_) {
-      _fabAnimationController.reverse();
+  void _onItemTapped(int index) {
+    if (index == 2) {
+      // Show Grammar Features modal bottom sheet
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const EnhancedFeaturesMenuBottomSheet(),
+      );
+      return;
+    }
+    setState(() {
+      _selectedNavIndex = index;
     });
-
-    final ThemeData theme = Theme.of(context);
-    final bool isDarkMode = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      enableDrag: true,
-      isDismissible: true,
-      builder: (context) => FeaturesMenuBottomSheet(isDarkMode: isDarkMode),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDarkMode = theme.brightness == Brightness.dark;
-
-    // Use theme colors
-    final Color selectedColor = isDarkMode ? starGold : primaryOrange;
-    final Color unselectedColor = isDarkMode ? Colors.white54 : const Color(0xFFA8A6A7);
-    final Color backgroundColor = isDarkMode ? nightBlue : desertSand;
-    final Color navBarBackgroundColor = isDarkMode ? darkPurple : Colors.white;
+    const Color selectedOrange = Color(0xFFB55B0A);
+    const Color unselectedGrey = Color(0xFFA8A6A7);
+    const Color backgroundColor = Color(0xFFFAF8EE);
+    const Color navBarBackgroundColor = Colors.white;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _widgetOptions,
-      ),
+      body: _widgetOptions[_actualScreenIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: navBarBackgroundColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
-              blurRadius: 15,
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
               spreadRadius: 0,
               offset: const Offset(0, -5),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
-          child: Stack(
-            children: [
-              BottomNavigationBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                selectedItemColor: selectedColor,
-                unselectedItemColor: unselectedColor,
-                selectedLabelStyle: TextStyle(
-                  fontFamily: 'Tajawal',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12.sp,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontFamily: 'Tajawal',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 10.sp,
-                ),
-                type: BottomNavigationBarType.fixed,
-                currentIndex: _selectedIndex > 1 ? _selectedIndex + 1 : _selectedIndex,
-                onTap: _onItemTapped,
-                items: <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.home_outlined, 0),
-                    label: 'الرئيسية',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.book_outlined, 1),
-                    label: 'المكتبة',
-                  ),
-                  // Middle item placeholder (will be covered by FAB)
-                  BottomNavigationBarItem(
-                    icon: SizedBox(height: 24.r),
-                    label: '',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.people_alt_outlined, 3),
-                    label: 'المجتمعات',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.person_outline, 4),
-                    label: 'الحساب',
-                  ),
-                ],
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          child: Directionality(
+            textDirection: TextDirection.ltr, // LTR order
+            child: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: selectedOrange,
+              unselectedItemColor: unselectedGrey,
+              selectedLabelStyle: TextStyle(
+                fontFamily: 'Tajawal',
+                fontWeight: FontWeight.w500,
+                fontSize: 12.sp,
               ),
-              // Custom FAB positioned in the center
-              Positioned(
-                top: -10.h,
-                left: MediaQuery.of(context).size.width / 2 - 35.w,
-                child: ScaleTransition(
-                  scale: _fabAnimation,
-                  child: GestureDetector(
-                    onTap: _showGrammarFeaturesMenu,
-                    child: Container(
-                      width: 70.w,
-                      height: 70.w,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isDarkMode
-                              ? [starGold, starGold.withOpacity(0.8)]
-                              : [primaryOrange, primaryOrange.withOpacity(0.8)],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: (isDarkMode ? starGold : primaryOrange).withOpacity(0.4),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                            spreadRadius: 0,
-                          ),
-                          BoxShadow(
-                            color: (isDarkMode ? starGold : primaryOrange).withOpacity(0.2),
-                            blurRadius: 25,
-                            offset: const Offset(0, 10),
-                            spreadRadius: -5,
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Main icon
-                          Icon(
-                            Icons.auto_awesome,
-                            color: Colors.white,
-                            size: 28.r,
-                          ),
-                          // Animated pulse effect
-                          TweenAnimationBuilder<double>(
-                            duration: const Duration(seconds: 2),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            onEnd: () => setState(() {}), // Restart animation
-                            builder: (context, value, child) {
-                              return Container(
-                                width: 70.w * (1 + value * 0.3),
-                                height: 70.w * (1 + value * 0.3),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: (isDarkMode ? starGold : primaryOrange)
-                                        .withOpacity(0.3 * (1 - value)),
-                                    width: 2.w,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+              unselectedLabelStyle: TextStyle(
+                fontFamily: 'Tajawal',
+                fontWeight: FontWeight.w400,
+                fontSize: 10.sp,
+              ),
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _selectedNavIndex,
+              onTap: _onItemTapped,
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined, size: 26.r),
+                  label: 'الرئيسية',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.book_outlined, size: 26.r),
+                  label: 'المكتبة',
+                ),
+                BottomNavigationBarItem(
+                  icon: Container(
+                    width: 48.r,
+                    height: 48.r,
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      _selectedNavIndex == 2
+                          ? 'assets/images/arabli_icon_selected.png'
+                          : 'assets/images/arabli_icon_unselected.png',
+                      width: 60.r,
+                      height: 60.r,
+                      fit: BoxFit.contain,
                     ),
                   ),
+                  label: '', // No label; text is in the PNG
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavIcon(IconData icon, int index) {
-    // Adjust the current index comparison for items after the FAB
-    int currentIndex = _selectedIndex > 1 ? _selectedIndex + 1 : _selectedIndex;
-    bool isSelected = currentIndex == index;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: EdgeInsets.all(isSelected ? 8.w : 4.w),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? (Theme.of(context).brightness == Brightness.dark ? starGold : primaryOrange).withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Icon(
-        icon,
-        size: isSelected ? 26.r : 24.r,
-      ),
-    );
-  }
-}
-
-// Enhanced DummyScreen with better theming
-class DummyScreen extends StatelessWidget {
-  final String title;
-
-  const DummyScreen({Key? key, required this.title}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDarkMode = theme.brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDarkMode ? nightBlue : desertSand,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Tajawal',
-            fontWeight: FontWeight.bold,
-            fontSize: 20.sp,
-            color: isDarkMode ? starGold : primaryOrange,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Container(
-          margin: EdgeInsets.all(20.w),
-          padding: EdgeInsets.all(30.w),
-          decoration: BoxDecoration(
-            color: isDarkMode ? darkPurple.withOpacity(0.7) : Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: (isDarkMode ? starGold : primaryOrange).withOpacity(0.3),
-              width: 1.5.w,
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people_alt_outlined, size: 26.r),
+                  label: 'المجتمعات',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline, size: 26.r),
+                  label: 'الحساب',
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.1),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: (isDarkMode ? starGold : primaryOrange).withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.build_circle_outlined,
-                  size: 60.r,
-                  color: isDarkMode ? starGold : primaryOrange,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                'قريباً',
-                style: TextStyle(
-                  fontFamily: 'Tajawal',
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? starGold : primaryOrange,
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                'صفحة $title قيد التطوير',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Tajawal',
-                  fontSize: 16.sp,
-                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'سنعمل على إتاحتها قريباً',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Tajawal',
-                  fontSize: 14.sp,
-                  color: isDarkMode ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-            ],
           ),
         ),
       ),

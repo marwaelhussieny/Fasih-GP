@@ -52,38 +52,79 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      // Access the AuthProvider
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      // Call the login method from the AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final loginEmail = _emailController.text.trim().toLowerCase();
+    final loginPassword = _passwordController.text.trim().toLowerCase();
+    print('🔐 Login Screen: Starting login for $loginEmail');
+
+    try {
       await authProvider.login(
-        _emailController.text.trim(),
-        _passwordController.text,
+        // BuildContext : context,
+        email: loginEmail,
+        password: _passwordController.text,
       );
 
-      // Check the result from the AuthProvider
-      if (authProvider.error == null && authProvider.isAuthenticated) {
-        if (mounted) {
-          // Navigate to the home screen upon successful login
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        }
-      } else if (authProvider.error != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                authProvider.error!, // Display error message from provider
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Tajawal',
-                  color: Theme.of(context).colorScheme.onError,
-                ),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+      // // if (!mounted) return;
+      // if (context.mounted) {
+      //   Navigator.pushReplacementNamed(context, AppRoutes.main);
+      //   // or using GoRouter:
+      //   // GoRouter.of(context).go(AppRoutes.home);
+      // }
+      if (authProvider.currentUser != null) {
+        final user = authProvider.currentUser!;
+        print('🔐 Login successful for user: ${user.email} (verified: ${user.isVerified})');
+
+        // The AuthGuard will handle this navigation. The logic below is still valid
+        // but the GoRouter redirect will likely be triggered first.
+        if (user.isVerified) {
+          print('🔐 User verified, navigating to home');
+          Navigator.pushReplacementNamed(context, AppRoutes.main);
+        } else {
+          print('🔐 User needs OTP, navigating to OTP screen');
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.otp,
+            arguments: {'email': user.email},
           );
         }
+      } else {
+        print('🔐 Login failed or user data not found. Error: ${authProvider.error}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.error ?? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Tajawal',
+                color: Theme.of(context).colorScheme.onError,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      print('🔐 Login exception: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Tajawal',
+                color: Theme.of(context).colorScheme.onError,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
@@ -95,10 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final Color textColor = theme.textTheme.bodyLarge!.color!;
     final Color mutedTextColor = theme.hintColor;
     final Color primaryColor = theme.primaryColor;
-    final Color secondaryColor = theme.colorScheme.secondary;
-    final Color errorColor = theme.colorScheme.error;
 
-    // Listen to AuthProvider for loading state
     final authProvider = Provider.of<AuthProvider>(context);
     final bool isLoading = authProvider.isLoading;
 
@@ -113,7 +151,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: 24.h),
-
                 Center(
                   child: Text(
                     'تسجيل الدخول',
@@ -125,7 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-
                 Center(
                   child: Text(
                     'يرجى إدخال البيانات لاستخدام حسابك',
@@ -138,7 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: 32.h),
-
                 SizedBox(
                   height: 250.h,
                   child: Image.asset(
@@ -155,9 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                 ),
-
                 SizedBox(height: 32.h),
-
                 TextFormField(
                   controller: _emailController,
                   textAlign: TextAlign.right,
@@ -182,7 +215,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validateEmail,
                 ),
                 SizedBox(height: 20.h),
-
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -245,9 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: _validatePassword,
                 ),
-
                 SizedBox(height: 40.h),
-
                 SizedBox(
                   width: double.infinity,
                   height: 48.h,
@@ -273,13 +303,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       minimumSize: MaterialStateProperty.all(Size(double.infinity, 48.h)),
                     ),
                     child: isLoading
-                        ? SizedBox(
-                      height: 20.r,
-                      width: 20.r,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
-                      ),
+                        ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 20.r,
+                          width: 20.r,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Text(
+                          'جاري تسجيل الدخول...',
+                          style: theme.elevatedButtonTheme.style?.textStyle?.resolve({})?.copyWith(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     )
                         : Text(
                       'تسجيل الدخول',
@@ -290,9 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 24.h),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -319,13 +360,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-
                 SizedBox(height: 8.h),
-
                 Center(
                   child: InkWell(
                     onTap: () {
-                      Navigator.pushReplacementNamed(context, AppRoutes.home);
+                      Navigator.pushReplacementNamed(context, AppRoutes.main);
                       print('Continue as guest tapped');
                     },
                     child: Text(
@@ -339,7 +378,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 32.h),
               ],
             ),

@@ -1,325 +1,351 @@
 // lib/features/auth/presentation/screens/otp_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // Ensure flutter_screenutil is used
-import 'package:pin_code_fields/pin_code_fields.dart'; // Make sure this package is in pubspec.yaml
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:provider/provider.dart';
+import 'dart:async';
 
-// TODO: Import your authentication service here (e.g., for OTP verification and resend)
-// import 'package:grad_project/features/auth/data/services/auth_service.dart';
+// Import your authentication provider
+import 'package:grad_project/features/auth/presentation/providers/auth_provider.dart';
 
 // Import your app routes for navigation
 import 'package:grad_project/core/navigation/app_routes.dart';
 
 class OTPScreen extends StatefulWidget {
-  // TODO: Consider passing the email or user ID to this screen
-  // final String email;
-  const OTPScreen({Key? key}) : super(key: key); // Add required this.email if you pass it
+  // FIX: Added the named parameter 'email' to the constructor
+  final String? email;
+
+  const OTPScreen({
+    Key? key,
+    this.email, // It must be defined here
+  }) : super(key: key);
 
   @override
   State<OTPScreen> createState() => _OTPScreenState();
 }
 
 class _OTPScreenState extends State<OTPScreen> {
-  // Controller for the OTP input field (PinCodeTextField uses this internally)
   final TextEditingController _otpController = TextEditingController();
-
-  // Stores the entered OTP code
   String _otpCode = '';
 
-  // TODO: Add a state variable for loading indicator
-  bool _isLoading = false;
-
-  // TODO: Add a state variable for resend timer if you want to implement it
-  // int _resendSeconds = 60;
-  // Timer? _timer;
+  // Timer for resend functionality
+  Timer? _timer;
+  int _resendSeconds = 60;
+  bool _canResend = false;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Start resend timer here if implemented
-    // _startResendTimer();
+    _startResendTimer();
+
+    // FIX: Get the email directly from the widget parameter
+    if (widget.email == null || widget.email!.isEmpty) {
+      // Handle the case where email is not provided
+      _showErrorMessage('خطأ: لم يتم العثور على البريد الإلكتروني');
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          // Use GoRouter to navigate back
+          // GoRouter.of(context).go(AppRoutes.login);
+          // or just pop
+          Navigator.of(context).pop();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _otpController.dispose();
-    // TODO: Cancel resend timer if implemented
-    // _timer?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
-  // TODO: Implement OTP verification logic
+  // Start countdown timer for resend button
+  void _startResendTimer() {
+    _canResend = false;
+    _resendSeconds = 60;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendSeconds == 0) {
+        setState(() {
+          _canResend = true;
+        });
+        timer.cancel();
+      } else {
+        setState(() {
+          _resendSeconds--;
+        });
+      }
+    });
+  }
+
+  // Handle OTP verification
   Future<void> _verifyOtp() async {
-    if (_otpCode.length != 5) { // Assuming OTP length is 5
-      // TODO: Show an error message if OTP is not complete
-      print('Please enter a complete OTP.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'يرجى إدخال الرمز كاملاً', // Please enter the complete code
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Tajawal',
-              color: Theme.of(context).colorScheme.onError, // Themed error text color
-            ),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error, // Themed error background color
-        ),
-      );
+    if (_otpCode.length != 6) {
+      _showErrorMessage('يرجى إدخال الرمز كاملاً (6 أرقام)');
       return;
     }
 
-    setState(() {
-      _isLoading = true; // Show loading indicator
-    });
+    // FIX: Use the email from the widget parameter
+    if (widget.email == null || widget.email!.isEmpty) {
+      _showErrorMessage('خطأ في البريد الإلكتروني');
+      return;
+    }
 
-    try {
-      // TODO: Call your authentication service's OTP verification method here
-      // Example:
-      // final authService = AuthService();
-      // await authService.verifyOtp(email: widget.email, otp: _otpCode);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
-      print('OTP Verification successful for code: $_otpCode');
+    final success = await authProvider.verifyOTP(
+      email: widget.email!,
+      otp: _otpCode,
+    );
 
-      // TODO: Navigate to the new password screen or directly to home if it's for new user registration
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'تم التحقق من الرمز بنجاح!', // Code verified successfully!
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: Theme.of(context).colorScheme.onPrimary, // Themed text color for success
-              ),
-            ),
-            backgroundColor: Theme.of(context).primaryColor, // Themed primary color for success
-          ),
-        );
-        // Example: Navigate to a screen where user can set new password
-        Navigator.pushReplacementNamed(context, AppRoutes.newPassword); // Assuming a new route for setting new password
-      }
-    } catch (e) {
-      // TODO: Handle OTP verification errors (e.g., invalid OTP, expired OTP)
-      print('OTP Verification failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'فشل التحقق من الرمز: ${e.toString()}', // Code verification failed: [error message]
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: Theme.of(context).colorScheme.onError, // Themed error text color
-              ),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error, // Themed error background color
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false; // Hide loading indicator
-        });
-      }
+    if (success && mounted) {
+      _showSuccessMessage('تم التحقق من الرمز بنجاح!');
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          // The GoRouter will now handle this navigation
+          // GoRouter.of(context).go(AppRoutes.home);
+          // This will be handled by the AuthGuard
+        }
+      });
+    } else if (mounted && authProvider.error != null) {
+      _showErrorMessage(authProvider.error!);
+      setState(() {
+        _otpCode = '';
+        _otpController.clear();
+      });
     }
   }
 
-  // TODO: Implement resend OTP logic
+  // Handle resend OTP
   Future<void> _resendOtp() async {
-    // TODO: Add logic to prevent multiple resend requests too quickly
-    // if (_resendSeconds > 0) return; // Prevent resending if timer is active
+    if (!_canResend || widget.email == null || widget.email!.isEmpty) return;
 
-    setState(() {
-      // _resendSeconds = 60; // Reset timer
-      // _startResendTimer(); // Restart timer
-    });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    try {
-      // TODO: Call your authentication service's resend OTP method here
-      // Example:
-      // final authService = AuthService();
-      // await authService.resendOtp(email: widget.email);
+    final success = await authProvider.resendOTP(email: widget.email!);
 
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
-      print('Resend OTP successful');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'تم إرسال رمز جديد إلى بريدك الإلكتروني', // New code sent to your email
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: Theme.of(context).colorScheme.onPrimary, // Themed text color for success
-              ),
-            ),
-            backgroundColor: Theme.of(context).primaryColor, // Themed primary color for success
-          ),
-        );
-      }
-    } catch (e) {
-      print('Resend OTP failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'فشل إرسال الرمز: ${e.toString()}', // Failed to send code: [error message]
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                color: Theme.of(context).colorScheme.onError, // Themed error text color
-              ),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error, // Themed error background color
-          ),
-        );
-      }
+    if (success && mounted) {
+      _showSuccessMessage('تم إرسال رمز جديد إلى بريدك الإلكتروني');
+      _startResendTimer();
+      setState(() {
+        _otpCode = '';
+        _otpController.clear();
+      });
+    } else if (mounted && authProvider.error != null) {
+      _showErrorMessage(authProvider.error!);
     }
   }
 
-  // TODO: Implement resend timer (optional but good UX)
-  // void _startResendTimer() {
-  //   _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-  //     if (_resendSeconds == 0) {
-  //       timer.cancel();
-  //       setState(() {}); // Rebuild to enable resend button
-  //     } else {
-  //       setState(() {
-  //         _resendSeconds--;
-  //       });
-  //     }
-  //   });
-  // }
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Tajawal',
+            color: Theme.of(context).colorScheme.onError,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Tajawal',
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
+        ),
+        backgroundColor: Theme.of(context).primaryColor,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get theme-dependent colors and text styles
     final ThemeData theme = Theme.of(context);
     final Color backgroundColor = theme.scaffoldBackgroundColor;
-    final Color textColor = theme.textTheme.bodyLarge!.color!; // General text color
-    final Color mutedTextColor = theme.hintColor; // Muted text color
-    final Color primaryColor = theme.primaryColor; // Your primary brand color
-    final Color errorColor = theme.colorScheme.error; // Error color
+    final Color textColor = theme.textTheme.bodyLarge!.color!;
+    final Color mutedTextColor = theme.hintColor;
+    final Color primaryColor = theme.primaryColor;
+    final Color cardColor = theme.cardColor;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final bool isLoading = authProvider.isLoading;
+
+    if (widget.email == null) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: backgroundColor, // Themed background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 32.w), // Use screenutil
+          padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 16.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 24.h), // Use screenutil
-
-              // Back Arrow
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
                   icon: Icon(
-                    Icons.arrow_back_ios,
-                    size: 20.r, // Use screenutil
-                    color: textColor, // Themed icon color
+                    Icons.arrow_back_ios_new,
+                    size: 20.r,
+                    color: textColor,
                   ),
-                  onPressed: () {
-                    Navigator.pop(context);
+                  onPressed: () => Navigator.pop(context),
+                  style: IconButton.styleFrom(
+                    backgroundColor: cardColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    padding: EdgeInsets.all(12.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Center(
+                child: Text(
+                  'تحقق من البريد الإلكتروني',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: textColor,
+                    fontSize: 28.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Column(
+                    children: [
+                      Text(
+                        'تم إرسال رمز التحقق المكون من 6 أرقام إلى',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: mutedTextColor,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 4.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          // FIX: Use the email from the widget parameter
+                          widget.email!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: primaryColor,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 40.h),
+              Container(
+                height: 200.h,
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(horizontal: 32.w),
+                child: Image.asset(
+                  'assets/images/otp_verification.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200.h,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Icon(
+                        Icons.mark_email_read_outlined,
+                        size: 80.r,
+                        color: primaryColor,
+                      ),
+                    );
                   },
                 ),
               ),
-
-              SizedBox(height: 8.h), // Use screenutil
-
-              // Title
-              Center(
-                child: Text(
-                  'تحقق من البريد الإلكتروني', // Verify Email
-                  style: theme.textTheme.headlineMedium?.copyWith( // Themed headlineMedium
+              SizedBox(height: 40.h),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: PinCodeTextField(
+                  appContext: context,
+                  length: 6,
+                  controller: _otpController,
+                  onChanged: (value) {
+                    setState(() {
+                      _otpCode = value;
+                    });
+                  },
+                  obscureText: false,
+                  animationType: AnimationType.fade,
+                  textStyle: theme.textTheme.titleLarge?.copyWith(
                     color: textColor,
-                    fontSize: 22.sp, // Override font size with screenutil
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
                   ),
-                ),
-              ),
-
-              SizedBox(height: 8.h), // Use screenutil
-
-              // Subtitle
-              Center(
-                child: Text(
-                  'تم ارسال رمز لبريدك الالكتروني لإعادة ضبط كلمة المرور', // A code has been sent to your email to reset password
-                  style: theme.textTheme.bodyMedium?.copyWith( // Themed bodyMedium
-                    color: mutedTextColor,
-                    fontSize: 14.sp, // Override font size with screenutil
-                    fontWeight: FontWeight.w400,
+                  pinTheme: PinTheme(
+                    shape: PinCodeFieldShape.box,
+                    borderRadius: BorderRadius.circular(12.r),
+                    fieldHeight: 56.h,
+                    fieldWidth: 45.w,
+                    activeColor: primaryColor,
+                    selectedColor: primaryColor,
+                    inactiveColor: primaryColor.withOpacity(0.3),
+                    activeFillColor: primaryColor.withOpacity(0.1),
+                    selectedFillColor: primaryColor.withOpacity(0.1),
+                    inactiveFillColor: theme.cardColor,
+                    borderWidth: 2,
                   ),
-                  textAlign: TextAlign.center,
+                  animationDuration: const Duration(milliseconds: 300),
+                  enableActiveFill: true,
+                  keyboardType: TextInputType.number,
+                  autoDisposeControllers: false,
                 ),
               ),
-
-              SizedBox(height: 40.h), // Use screenutil
-
-              // OTP Fields (PinCodeTextField)
-              PinCodeTextField(
-                appContext: context,
-                length: 5, // Assuming a 5-digit OTP
-                controller: _otpController,
-                onChanged: (value) {
-                  setState(() {
-                    _otpCode = value;
-                  });
-                },
-                onCompleted: (value) {
-                  print("Completed: $value");
-                  _verifyOtp();
-                },
-                obscureText: false,
-                animationType: AnimationType.fade,
-                textStyle: theme.textTheme.titleLarge?.copyWith( // Themed text style
-                  color: textColor,
-                  fontSize: 20.sp, // Override font size with screenutil
-                  fontWeight: FontWeight.w600,
-                ),
-                pinTheme: PinTheme(
-                  shape: PinCodeFieldShape.box,
-                  borderRadius: BorderRadius.circular(6.r), // Use screenutil
-                  fieldHeight: 50.h, // Use screenutil
-                  fieldWidth: 50.w, // Use screenutil
-                  activeColor: primaryColor, // Themed primary color
-                  selectedColor: primaryColor, // Themed primary color
-                  inactiveColor: primaryColor, // Themed primary color
-                  // TODO: Add activeFillColor, selectedFillColor, inactiveFillColor if using enableActiveFill
-                  // fieldOuterPadding: EdgeInsets.symmetric(horizontal: 4.w), // Optional: Add spacing
-                ),
-                animationDuration: const Duration(milliseconds: 300),
-                enableActiveFill: false,
-                keyboardType: TextInputType.number,
-                // TODO: Add errorTextDirection if you want RTL error messages
-                // errorTextDirection: TextDirection.rtl,
-              ),
-
-              SizedBox(height: 32.h), // Use screenutil
-
-              // Continue Button (using ElevatedButtonThemeData from AppTheme)
+              SizedBox(height: 32.h),
               SizedBox(
                 width: double.infinity,
-                height: 48.h, // Use screenutil
+                height: 56.h,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _verifyOtp,
-                  // Style is now primarily from AppTheme.elevatedButtonTheme
-                  // We can override disabledBackgroundColor if it's not handled by the theme
+                  onPressed: (isLoading || _otpCode.length != 6) ? null : _verifyOtp,
                   style: theme.elevatedButtonTheme.style?.copyWith(
                     backgroundColor: MaterialStateProperty.resolveWith<Color?>(
                           (Set<MaterialState> states) {
                         if (states.contains(MaterialState.disabled)) {
-                          return primaryColor.withOpacity(0.6); // Themed disabled color
+                          return primaryColor.withOpacity(0.6);
                         }
-                        return theme.elevatedButtonTheme.style?.backgroundColor?.resolve(states); // Use theme's default
+                        return theme.elevatedButtonTheme.style?.backgroundColor?.resolve(states);
                       },
                     ),
                     foregroundColor: MaterialStateProperty.resolveWith<Color?>(
@@ -328,61 +354,69 @@ class _OTPScreenState extends State<OTPScreen> {
                       },
                     ),
                     shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r), // Use screenutil
+                      borderRadius: BorderRadius.circular(16.r),
                     )),
-                    minimumSize: MaterialStateProperty.all(Size(double.infinity, 48.h)), // Ensure height is applied
+                    minimumSize: MaterialStateProperty.all(Size(double.infinity, 56.h)),
                   ),
-                  child: _isLoading
+                  child: isLoading
                       ? SizedBox(
-                    height: 20.r, // Use screenutil
-                    width: 20.r, // Use screenutil
+                    height: 20.r,
+                    width: 20.r,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary), // Themed
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                     ),
                   )
                       : Text(
-                    'استمرار', // Continue
-                    style: theme.elevatedButtonTheme.style?.textStyle?.resolve({})?.copyWith( // Themed text style
-                      fontSize: 16.sp, // Override font size with screenutil
-                      fontWeight: FontWeight.w500,
+                    'تأكيد الرمز',
+                    style: theme.elevatedButtonTheme.style?.textStyle?.resolve({})?.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-
-              SizedBox(height: 16.h), // Use screenutil
-
-              // Resend Code Button (using OutlinedButton.styleFrom)
-              SizedBox(
-                width: double.infinity,
-                height: 44.h, // Use screenutil
-                child: OutlinedButton(
-                  onPressed: _isLoading ? null : _resendOtp,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: primaryColor, // Themed primary color
-                    side: BorderSide(color: primaryColor), // Themed primary color for border
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r), // Use screenutil
-                    ),
-                  ),
-                  child:
-                  // TODO: Conditionally display timer if implemented
-                  // _resendSeconds > 0
-                  //     ? Text('إرسال رمز آخر (${_resendSeconds}s)')
-                  //     :
+              SizedBox(height: 24.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Text(
-                    'إرسال رمز آخر', // Resend Code
-                    style: theme.textButtonTheme.style?.textStyle?.resolve({})?.copyWith( // Themed text style
-                      fontSize: 14.sp, // Override font size with screenutil
-                      fontWeight: FontWeight.w500,
-                      color: primaryColor, // Ensure text color is primary
+                    'لم تستلم الرمز؟ ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 14.sp,
+                      color: textColor,
                     ),
+                  ),
+                  InkWell(
+                    onTap: (_canResend && !isLoading) ? _resendOtp : null,
+                    child: Text(
+                      _canResend
+                          ? 'إرسال رمز جديد'
+                          : 'إعادة الإرسال خلال $_resendSeconds ثانية',
+                      style: theme.textButtonTheme.style?.textStyle?.resolve({})?.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: _canResend ? primaryColor : mutedTextColor,
+                        decoration: _canResend ? TextDecoration.underline : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 32.h),
+              InkWell(
+                onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+                child: Text(
+                  'تغيير البريد الإلكتروني',
+                  style: theme.textButtonTheme.style?.textStyle?.resolve({})?.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: mutedTextColor,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
-
-              SizedBox(height: 32.h), // Use screenutil
+              SizedBox(height: 40.h),
             ],
           ),
         ),

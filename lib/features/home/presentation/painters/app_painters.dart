@@ -9,10 +9,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart'; // For .w and .h
 class EnhancedDesertDunesPainter extends CustomPainter {
   final bool isDarkMode;
   final double animationValue;
+  final Color primaryColor; // Add missing parameter
+  final Color surfaceColor; // Add missing parameter
+  final Color backgroundColor; // Add missing parameter
 
   EnhancedDesertDunesPainter({
     required this.isDarkMode,
     required this.animationValue,
+    required this.primaryColor, // Make required
+    required this.surfaceColor, // Make required
+    required this.backgroundColor, // Make required
   });
 
   @override
@@ -165,10 +171,16 @@ class DottedDesertMapPathPainter extends CustomPainter {
 class EnhancedSandFooterPainter extends CustomPainter {
   final bool isDarkMode;
   final double animationValue;
+  final Color primaryColor; // Add missing parameter
+  final Color surfaceColor; // Add missing parameter
+  final Color backgroundColor; // Add missing parameter
 
   EnhancedSandFooterPainter({
     required this.isDarkMode,
     required this.animationValue,
+    required this.primaryColor, // Make required
+    required this.surfaceColor, // Make required
+    required this.backgroundColor, // Make required
   });
 
   @override

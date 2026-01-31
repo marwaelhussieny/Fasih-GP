@@ -21,6 +21,37 @@ class AppTheme {
   static const Color darkSecondaryTextColor = Color(0xFFB0B0B0); // Lighter gray for secondary text
   static const Color darkHintColor = Color(0xFF8F8F8F); // Hint text color for dark mode
 
+  // Light theme colors (merged from AppColors)
+  static const Color primaryOrange = Color(0xFFFF8C42);
+  static const Color lightOrange = Color(0xFFFFB366);
+  static const Color warmAmber = Color(0xFFFFC947);
+  static const Color softPeach = Color(0xFFFFE5D3);
+  static const Color desertSand = Color(0xFFFFF8F3);
+
+  // Dark theme colors (merged from AppColors)
+  static const Color nightBlue = Color(0xFF1A1B3A);
+  static const Color darkPurple = Color(0xFF2D1B69);
+  static const Color starGold = Color(0xFFFFD700);
+  static const Color moonSilver = Color(0xFFE6E6FA);
+
+  // Neutral colors (merged from AppColors)
+  static const Color textDark = Color(0xFF2C3E50);
+  static const Color textLight = Color(0xFF7F8C8D);
+  static const Color backgroundLight = Color(0xFFFAFAFA);
+  static const Color backgroundDark = Color(0xFF121212);
+
+  // Status colors (merged from AppColors)
+  static const Color success = Color(0xFF27AE60);
+  static const Color error = Color(0xFFE74C3C);
+  static const Color warning = Color(0xFFF39C12);
+  static const Color info = Color(0xFF3498DB);
+
+  // Gradient combinations (merged from AppColors and newly created)
+  static const List<Color> primaryGradient = [primaryOrange, minimalColor]; // Updated gradient
+  static const List<Color> secondaryGradient = [primaryBrandColor, secondaryBrandColor]; // New gradient
+  static const List<Color> darkGradient = [darkPurple, accentColor]; // Updated dark gradient
+  static const List<Color> goldGradient = [warmAmber, starGold];
+
   // Light Theme - matching your mockup design
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
@@ -45,13 +76,13 @@ class AppTheme {
       onSecondary: Colors.white, // Text/icons on secondary color
       onSurface: primaryTextColor, // Text/icons on surface color
       onBackground: primaryTextColor, // Text/icons on background color
-      error: Colors.red, // Standard error color
+      error: error, // Using merged error color
       onError: Colors.white, // Text/icons on error color
       outline: Color(0xFFE0E0E0), // For borders/dividers
     ),
 
     // Text theme with proper contrast matching your design and Tajwal font
-    textTheme: const TextTheme( // Removed const as it's not needed with explicit fontFamily on all
+    textTheme: const TextTheme(
       headlineLarge: TextStyle(
         color: primaryTextColor,
         fontWeight: FontWeight.bold,
@@ -122,7 +153,7 @@ class AppTheme {
     ),
 
     // AppBar theme - matching your design with clean look
-    appBarTheme: AppBarTheme( // Removed const
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -191,10 +222,10 @@ class AppTheme {
         borderSide: BorderSide(color: primaryBrandColor, width: 2),
       ),
       errorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.red, width: 1),
+        borderSide: BorderSide(color: error, width: 1),
       ),
       focusedErrorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.red, width: 2),
+        borderSide: BorderSide(color: error, width: 2),
       ),
       labelStyle: const TextStyle(
         color: secondaryTextColor,
@@ -269,7 +300,7 @@ class AppTheme {
       onSecondary: Colors.white,
       onSurface: darkPrimaryTextColor, // Text/icons on surface color
       onBackground: darkPrimaryTextColor, // Text/icons on background color
-      error: Colors.red,
+      error: error, // Using merged error color
       onError: Colors.white,
       outline: Color(0xFF4D4D4D), // Darker outline for dark mode
     ),
@@ -291,7 +322,7 @@ class AppTheme {
     ),
 
     // AppBar theme for dark mode
-    appBarTheme: AppBarTheme( // Removed const
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -349,10 +380,10 @@ class AppTheme {
         borderSide: BorderSide(color: primaryBrandColor, width: 2),
       ),
       errorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.red, width: 1),
+        borderSide: BorderSide(color: error, width: 1),
       ),
       focusedErrorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.red, width: 2),
+        borderSide: BorderSide(color: error, width: 2),
       ),
       labelStyle: const TextStyle(
         color: darkSecondaryTextColor,

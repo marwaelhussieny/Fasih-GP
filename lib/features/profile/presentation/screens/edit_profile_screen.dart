@@ -9,7 +9,7 @@ import 'dart:io'; // For File
 
 // Corrected import path for UserProvider
 import 'package:grad_project/features/profile/presentation/providers/user_provider.dart';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart';
+import 'package:grad_project/features/profile/domain/entities/profile_user_entity.dart';
 
 // FIX: Corrected import paths for utility files (assuming 'app_' prefix and 'utils' folder)
 import 'package:grad_project/features/profile/presentation/utils/app_form_validators.dart';
@@ -30,11 +30,12 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _phoneController;
-  late TextEditingController _emailController;
-  late TextEditingController _dateOfBirthController;
-  late TextEditingController _jobController;
+  // Initialize with empty controllers to avoid LateInitializationError
+  late TextEditingController _nameController = TextEditingController();
+  late TextEditingController _phoneController = TextEditingController();
+  late TextEditingController _emailController = TextEditingController();
+  late TextEditingController _dateOfBirthController = TextEditingController();
+  late TextEditingController _jobController = TextEditingController();
   DateTime? _selectedDateOfBirth;
   File? _imageFile;
   bool _isFormChanged = false;
@@ -42,7 +43,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure context is fully built before initializing controllers
+    // Initialize controllers immediately to avoid late initialization error
+    _nameController = TextEditingController();
+    _phoneController = TextEditingController();
+    _emailController = TextEditingController();
+    _dateOfBirthController = TextEditingController();
+    _jobController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeControllers();
     });
@@ -50,26 +56,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _initializeControllers() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final UserEntity? currentUser = userProvider.user;
+    final ProfileUserEntity? currentUser = userProvider.user;
 
-    // Initialize controllers with current user data or empty string
-    _nameController = TextEditingController(text: currentUser?.name ?? '');
-    _phoneController = TextEditingController(text: currentUser?.phoneNumber ?? '');
-    _emailController = TextEditingController(text: currentUser?.email ?? '');
-    _jobController = TextEditingController(text: currentUser?.job ?? '');
+    // Set text for controllers after data loads
+    _nameController.text = currentUser?.name ?? '';
+    _phoneController.text = currentUser?.phoneNumber ?? '';
+    _emailController.text = currentUser?.email ?? '';
+    _jobController.text = currentUser?.job ?? '';
     _selectedDateOfBirth = currentUser?.dateOfBirth;
-    _dateOfBirthController = TextEditingController(
-      text: _selectedDateOfBirth != null
-          ? DateFormat('dd/MM/yyyy', 'ar').format(_selectedDateOfBirth!)
-          : '',
-    );
+    _dateOfBirthController.text = _selectedDateOfBirth != null
+        ? DateFormat('dd/MM/yyyy', 'ar').format(_selectedDateOfBirth!)
+        : '';
 
-    // Add listeners to track form changes
+    // Add listeners to track form changes, if not already added
     _nameController.addListener(_onFormChanged);
     _phoneController.addListener(_onFormChanged);
     _emailController.addListener(_onFormChanged);
     _jobController.addListener(_onFormChanged);
-    // Note: _dateOfBirthController doesn't need a listener as changes are from date picker
   }
 
   // Method to mark form as changed
@@ -159,7 +162,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         AppDialogUtils.showLoadingDialog(context); // Use AppDialogUtils
 
         await userProvider.updateUserProfileData(
-          name: _nameController.text,
+          fullName: _nameController.text,
           email: _emailController.text,
           phoneNumber: _phoneController.text, // Correctly pass phoneNumber
           dateOfBirth: _selectedDateOfBirth, // Correctly pass dateOfBirth
@@ -210,7 +213,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         appBar: _buildAppBar(theme),
         body: Consumer<UserProvider>(
           builder: (context, userProvider, child) {
-            final UserEntity? currentUser = userProvider.user;
+            final ProfileUserEntity? currentUser = userProvider.user;
 
             // Show loading state if user data is being fetched for the first time
             if (userProvider.isLoading && currentUser == null) {
@@ -283,7 +286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   // Helper method to build the main scrollable content
-  Widget _buildMainContent(ThemeData theme, UserEntity currentUser, UserProvider userProvider) {
+  Widget _buildMainContent(ThemeData theme, ProfileUserEntity currentUser, UserProvider userProvider) {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
       child: Form(

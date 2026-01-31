@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // lib/core/services/seed_data_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';

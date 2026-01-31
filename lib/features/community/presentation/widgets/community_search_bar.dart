@@ -2,51 +2,82 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:grad_project/features/home/presentation/screens/home_screen.dart' show primaryOrange, desertSand, nightBlue, starGold, lightOrange, darkPurple;
+import 'package:grad_project/core/theme/app_theme.dart';
 
 class CommunitySearchBar extends StatelessWidget {
   final bool isDarkMode;
+  final TextEditingController? controller;
+  final Function(String)? onChanged;
+  final VoidCallback? onTap;
 
-  const CommunitySearchBar({Key? key, required this.isDarkMode}) : super(key: key);
+  const CommunitySearchBar({
+    Key? key,
+    required this.isDarkMode,
+    this.controller,
+    this.onChanged,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode ? darkPurple.withOpacity(0.7) : Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        color: isDarkMode
+            ? const Color(0xFF2A2A2A)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isDarkMode ? starGold.withOpacity(0.2) : primaryOrange.withOpacity(0.2),
+          color: isDarkMode
+              ? const Color(0xFF404040)
+              : const Color(0xFFE0E0E0),
           width: 1.w,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        onTap: onTap,
         textAlign: TextAlign.right,
         style: TextStyle(
-          color: isDarkMode ? Colors.white : Colors.black87,
-          fontSize: 16.sp,
+          color: isDarkMode
+              ? Colors.white
+              : const Color(0xFF2C2C2C),
+          fontSize: 14.sp,
           fontFamily: 'Tajawal',
         ),
         decoration: InputDecoration(
-          hintText: 'البحث...', // Search...
+          hintText: 'البحث في المجتمعات...',
           hintStyle: TextStyle(
-            color: isDarkMode ? Colors.white54 : Colors.grey.shade600,
-            fontSize: 16.sp,
+            color: isDarkMode
+                ? const Color(0xFF9E9E9E)
+                : const Color(0xFF757575),
+            fontSize: 14.sp,
             fontFamily: 'Tajawal',
           ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          suffixIcon: Icon(
-            Icons.search,
-            color: isDarkMode ? starGold : primaryOrange,
-            size: 24.r,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          suffixIcon: Padding(
+            padding: EdgeInsets.only(right: 12.w),
+            child: Icon(
+              Icons.search,
+              color: isDarkMode
+                  ? const Color(0xFF9E9E9E)
+                  : const Color(0xFF757575),
+              size: 20.r,
+            ),
+          ),
+          suffixIconConstraints: BoxConstraints(
+            minWidth: 20.r,
+            minHeight: 20.r,
           ),
         ),
       ),

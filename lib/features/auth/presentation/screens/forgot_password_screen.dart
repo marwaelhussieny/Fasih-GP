@@ -41,9 +41,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       // Call the sendPasswordResetEmail method from the AuthProvider
-      await authProvider.sendPasswordResetEmail(
-        _emailController.text.trim(),
-      );
+      await authProvider.sendPasswordResetEmail(_emailController.text.trim());
 
       // Check the result from the AuthProvider
       if (authProvider.error == null) {
@@ -227,7 +225,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       vertical: 16.h,
                     ),
                     filled: true,
-                    fillColor: theme.inputDecorationTheme.fillColor, // Use theme's fill color
+                    fillColor: theme.inputDecorationTheme.fillColor,
                     border: theme.inputDecorationTheme.border,
                     enabledBorder: theme.inputDecorationTheme.enabledBorder,
                     focusedBorder: theme.inputDecorationTheme.focusedBorder,
@@ -243,7 +241,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   width: double.infinity,
                   height: 56.h,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _handlePasswordReset, // Use provider's isLoading
+                    onPressed: isLoading ? null : _handlePasswordReset,
                     style: theme.elevatedButtonTheme.style?.copyWith(
                       backgroundColor: MaterialStateProperty.resolveWith<Color?>(
                             (Set<MaterialState> states) {

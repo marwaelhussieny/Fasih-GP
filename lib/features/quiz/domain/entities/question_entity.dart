@@ -41,7 +41,7 @@ class QuestionEntity extends Equatable {
   ];
 
   // Helper to convert from a map (e.g., for initial AI/backend integration)
-  // This factory is usually in the data layer (model), but for initial setup, it's here.
+  // This factory is usually in the data layer (models), but for initial setup, it's here.
   factory QuestionEntity.fromMap(Map<String, dynamic> map) {
     return QuestionEntity(
       id: map['id'] as String,

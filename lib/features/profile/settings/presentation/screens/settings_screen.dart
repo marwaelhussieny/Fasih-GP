@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:grad_project/core/navigation/app_routes.dart';
 import 'package:grad_project/core/theme/theme_provider.dart';
 
+// Import logout helper
+import 'package:grad_project/features/auth/presentation/widgets/logout_helper.dart';
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -26,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
           'الإعدادات',
           style: TextStyle(
             color: appBarTextColor,
-            fontFamily: 'Tajwal',
+            fontFamily: 'Tajawal', // Fixed typo from 'Tajwal'
           ),
         ),
         leading: IconButton(
@@ -120,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
                         fontSize: 16,
                         color: textColor,
                         fontWeight: FontWeight.w500,
-                        fontFamily: 'Tajwal',
+                        fontFamily: 'Tajawal', // Fixed typo
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -152,7 +155,7 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
-              // Logout Button
+              // Updated Logout Button using LogoutHelper
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -160,7 +163,8 @@ class SettingsScreen extends StatelessWidget {
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        _showLogoutConfirmationDialog(context);
+                        // Use our new logout helper instead of the old dialog
+                        LogoutHelper.showLogoutDialog(context);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
@@ -171,7 +175,7 @@ class SettingsScreen extends StatelessWidget {
                           fontSize: 16,
                           color: Colors.red,
                           fontWeight: FontWeight.w500,
-                          fontFamily: 'Tajwal',
+                          fontFamily: 'Tajawal', // Fixed typo
                         ),
                       ),
                     ),
@@ -225,7 +229,7 @@ class SettingsScreen extends StatelessWidget {
                 fontSize: 16,
                 color: textColor,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Tajwal',
+                fontFamily: 'Tajawal', // Fixed typo
               ),
             ),
             const SizedBox(width: 12),
@@ -259,64 +263,5 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        final Color dialogBackgroundColor = Theme.of(context).dialogBackgroundColor;
-        final Color dialogTextColor = Theme.of(context).textTheme.bodyMedium!.color!;
-
-        return AlertDialog(
-          backgroundColor: dialogBackgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: Text(
-            'تسجيل الخروج',
-            style: TextStyle(
-              color: dialogTextColor,
-              fontFamily: 'Tajwal',
-            ),
-          ),
-          content: Text(
-            'هل أنت متأكد أنك تريد تسجيل الخروج؟',
-            style: TextStyle(
-              color: dialogTextColor.withOpacity(0.8),
-              fontFamily: 'Tajwal',
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'إلغاء',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontFamily: 'Tajwal',
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            TextButton(
-              child: const Text(
-                'تسجيل الخروج',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontFamily: 'Tajwal',
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRoutes.login,
-                      (route) => false,
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+// Remove the old logout dialog since we're using LogoutHelper now
 }

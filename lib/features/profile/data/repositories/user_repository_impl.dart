@@ -1,59 +1,53 @@
 // lib/features/profile/data/repositories/user_repository_impl.dart
 
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:grad_project/features/profile/domain/entities/profile_user_entity.dart';
 import 'package:grad_project/features/profile/data/datasources/user_remote_data_source.dart';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart';
+import 'package:grad_project/features/profile/data/models/profile_user_model.dart';
 import 'package:grad_project/features/profile/domain/repositories/user_repository.dart';
+
 
 class UserRepositoryImpl implements UserRepository {
   final UserRemoteDataSource remoteDataSource;
-  final FirebaseAuth _firebaseAuth;
 
-  UserRepositoryImpl({
-    UserRemoteDataSource? remoteDataSource,
-    FirebaseAuth? firebaseAuth,
-  })  : remoteDataSource = remoteDataSource ?? UserRemoteDataSourceImpl(),
-        _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  UserRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<UserEntity?> getUserProfile(String uid) async {
-    try {
-      return await remoteDataSource.getUserProfile(uid);
-    } catch (e) {
-      throw Exception('Failed to fetch user profile: $e');
-    }
+  Future<ProfileUserEntity?> getUserProfile() async {
+    // Calls the correct method on the remote data source
+    final userModel = await remoteDataSource.getUserProfile();
+    return userModel?.toEntity();
   }
 
   @override
-  Future<void> updateUserProfile(UserEntity user) async {
-    try {
-      await remoteDataSource.updateUserProfile(user.id, user); // Correctly using user.id
-    } catch (e) {
-      throw Exception('Failed to update user profile: $e');
-    }
+  Future<ProfileUserEntity> updateProfile({
+    String? fullName,
+    String? phoneNumber,
+    String? job,
+    DateTime? dateOfBirth,
+    String? country,
+  }) async {
+    // Calls the correct method with the correct parameters
+    final updatedUserModel = await remoteDataSource.updateUserProfile(
+      fullName: fullName,
+      phoneNumber: phoneNumber,
+      job: job,
+      dateOfBirth: dateOfBirth,
+      country: country,
+    );
+    return updatedUserModel.toEntity();
   }
 
   @override
-  Future<String> uploadProfileImage(String uid, File imageFile) async {
-    try {
-      return await remoteDataSource.uploadProfileImage(uid, imageFile);
-    } catch (e) {
-      throw Exception('Failed to upload profile image: $e');
-    }
+  Future<String> uploadProfileImage(File imageFile) async {
+    // Calls the correct method on the remote data source
+    return await remoteDataSource.uploadProfileImage(imageFile);
   }
 
   @override
-  Future<void> createUserProfile(String uid, String email, String name) async {
-    try {
-      await remoteDataSource.createUserProfile(uid, email, name);
-    } catch (e) {
-      throw Exception('Failed to create user profile: $e; This might happen if user profile already exists.');
-    }
-  }
-
-  @override
-  User? getCurrentFirebaseUser() {
-    return _firebaseAuth.currentUser;
+  Future<void> createUserProfile({required ProfileUserEntity user}) async {
+    // Converts the domain entity to a data model before sending to the data source
+    final userModel = ProfileUserModel.fromEntity(user);
+    await remoteDataSource.createUserProfile(user: userModel);
   }
 }

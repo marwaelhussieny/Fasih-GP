@@ -1,5 +1,3 @@
-// lib/features/grammar_morphology/domain/usecases/perform_morphology_usecase.dart
-
 import 'package:grad_project/features/grammar/domain/entities/grammar_morphology_entity.dart';
 import 'package:grad_project/features/grammar/domain/repositories/grammar_morphology_repository.dart';
 

@@ -1,83 +1,127 @@
 // lib/features/home/domain/entities/lesson_activity_entity.dart
-
-import 'package:equatable/equatable.dart';
-
 enum LessonActivityType {
-  quiz,
-  writing,
-  speaking,
-  flashcards,
-  grammar, // For 'اعربلي و اصرفلي' type activities
-  unknown,
+video,
+quiz,
+writing,
+speaking,
+flashcards,
+grammar,
+wordle,
+reading,
+listening,
 }
 
-class LessonActivityEntity extends Equatable {
-  final String id; // Added id to LessonActivityEntity
-  final String title;
-  final LessonActivityType type;
-  final bool isCompleted;
-  final String? associatedRoute; // e.g., AppRoutes.quiz, AppRoutes.flashcards
-  final String? associatedDataId; // e.g., quizId, flashcardSetId
+class LessonActivityEntity {
+final String id;
+final String title;
+final String description;
+final LessonActivityType type;
+final String? content;
+final String? videoUrl;
+final String? audioUrl;
+final String? imageUrl;
+final int duration; // in minutes
+final int xpReward;
+final bool isCompleted;
+final bool isRequired;
+final Map<String, dynamic>? metadata;
 
-  const LessonActivityEntity({
-    required this.id, // Required id
-    required this.title,
-    required this.type,
-    this.isCompleted = false,
-    this.associatedRoute,
-    this.associatedDataId,
-  });
+const LessonActivityEntity({
+required this.id,
+required this.title,
+required this.description,
+required this.type,
+this.content,
+this.videoUrl,
+this.audioUrl,
+this.imageUrl,
+this.duration = 0,
+this.xpReward = 0,
+this.isCompleted = false,
+this.isRequired = true,
+this.metadata,
+});
 
-  factory LessonActivityEntity.fromMap(Map<String, dynamic> map, String id) { // Expects id
-    return LessonActivityEntity(
-      id: id, // Use the provided ID
-      title: map['title'] as String? ?? '',
-      type: LessonActivityType.values.firstWhere(
-            (e) => e.toString() == 'LessonActivityType.${map['type']}',
-        orElse: () => LessonActivityType.unknown,
-      ),
-      isCompleted: map['isCompleted'] as bool? ?? false,
-      associatedRoute: map['associatedRoute'] as String?,
-      associatedDataId: map['associatedDataId'] as String?,
-    );
-  }
+factory LessonActivityEntity.fromJson(Map<String, dynamic> json) {
+return LessonActivityEntity(
+id: json['_id'] ?? json['id'] ?? '',
+title: json['title'] ?? '',
+description: json['description'] ?? '',
+type: _parseActivityType(json['type']),
+content: json['content'],
+videoUrl: json['videoUrl'],
+audioUrl: json['audioUrl'],
+imageUrl: json['imageUrl'],
+duration: json['duration'] ?? 0,
+xpReward: json['xpReward'] ?? 0,
+isCompleted: json['isCompleted'] ?? false,
+isRequired: json['isRequired'] ?? true,
+metadata: json['metadata'],
+);
+}
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id, // Include id in toMap
-      'title': title,
-      'type': type.toString().split('.').last, // Store enum name as string
-      'isCompleted': isCompleted,
-      'associatedRoute': associatedRoute,
-      'associatedDataId': associatedDataId,
-    };
-  }
+static LessonActivityType _parseActivityType(String? type) {
+switch (type?.toLowerCase()) {
+case 'video': return LessonActivityType.video;
+case 'quiz': return LessonActivityType.quiz;
+case 'writing': return LessonActivityType.writing;
+case 'speaking': return LessonActivityType.speaking;
+case 'flashcards': return LessonActivityType.flashcards;
+case 'grammar': return LessonActivityType.grammar;
+case 'wordle': return LessonActivityType.wordle;
+case 'reading': return LessonActivityType.reading;
+case 'listening': return LessonActivityType.listening;
+default: return LessonActivityType.video;
+}
+}
 
-  LessonActivityEntity copyWith({
-    String? id,
-    String? title,
-    LessonActivityType? type,
-    bool? isCompleted,
-    String? associatedRoute,
-    String? associatedDataId,
-  }) {
-    return LessonActivityEntity(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      type: type ?? this.type,
-      isCompleted: isCompleted ?? this.isCompleted,
-      associatedRoute: associatedRoute ?? this.associatedRoute,
-      associatedDataId: associatedDataId ?? this.associatedDataId,
-    );
-  }
+Map<String, dynamic> toJson() {
+return {
+'id': id,
+'title': title,
+'description': description,
+'type': type.name,
+'content': content,
+'videoUrl': videoUrl,
+'audioUrl': audioUrl,
+'imageUrl': imageUrl,
+'duration': duration,
+'xpReward': xpReward,
+'isCompleted': isCompleted,
+'isRequired': isRequired,
+'metadata': metadata,
+};
+}
 
-  @override
-  List<Object?> get props => [
-    id,
-    title,
-    type,
-    isCompleted,
-    associatedRoute,
-    associatedDataId,
-  ];
+LessonActivityEntity copyWith({
+String? id,
+String? title,
+String? description,
+LessonActivityType? type,
+String? content,
+String? videoUrl,
+String? audioUrl,
+String? imageUrl,
+int? duration,
+int? xpReward,
+bool? isCompleted,
+bool? isRequired,
+Map<String, dynamic>? metadata,
+}) {
+return LessonActivityEntity(
+id: id ?? this.id,
+title: title ?? this.title,
+description: description ?? this.description,
+type: type ?? this.type,
+content: content ?? this.content,
+videoUrl: videoUrl ?? this.videoUrl,
+audioUrl: audioUrl ?? this.audioUrl,
+imageUrl: imageUrl ?? this.imageUrl,
+duration: duration ?? this.duration,
+xpReward: xpReward ?? this.xpReward,
+isCompleted: isCompleted ?? this.isCompleted,
+isRequired: isRequired ?? this.isRequired,
+metadata: metadata ?? this.metadata,
+);
+}
 }

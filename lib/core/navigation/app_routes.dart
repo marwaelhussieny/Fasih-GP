@@ -8,6 +8,9 @@ class AppRoutes {
   static const String otp = '/otp';
   static const String forgotPassword = '/forgotPassword';
   static const String home = '/home';
+  static const String wordle = '/wordle';
+  static const String dailyWordle = '/wordle/daily';
+  static const String randomWordle = '/wordle/random';
   static const String profile = '/profile';
   static const String editProfile = '/editProfile';
   static const String settings = '/settings';
@@ -21,7 +24,8 @@ class AppRoutes {
   static const String security = '/security';
   static const String newPassword = '/newPassword';
   static const String main = '/main';
-  static const String community = '/community'; // <--- ADDED THIS ROUTE
+  static const String community = '/community';
+  static const String library = '/library';
 
   // Separated Grammar and Morphology routes
   static const String grammarParsing = '/grammarParsing';
@@ -32,4 +36,15 @@ class AppRoutes {
   static const String pluralFinder = '/pluralFinder';
   static const String antonymFinder = '/antonymFinder';
   static const String meaningFinder = '/meaningFinder';
+  static const String poetryMeter = '/poetryMeter';
+  static const String chatbot = '/chatbot';
+
+  // Home feature routes
+  static const String lessonDetails = '/lesson-details';
+  static const String videoLesson = '/video-lesson';
+  static const String levelCompletion = '/level-completion';
+
+  // Status and utility routes
+  static const String status = '/status';
+
 }

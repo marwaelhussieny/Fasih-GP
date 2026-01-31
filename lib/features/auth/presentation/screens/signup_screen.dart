@@ -86,20 +86,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final email = _emailController.text.trim();
 
       // Call the signUp method from the AuthProvider
       await authProvider.signUp(
-        _emailController.text.trim(),
-        _passwordController.text,
+        fullName: _fullNameController.text.trim(),
+        email: email,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
       );
 
       // Check the result from the AuthProvider
-      if (authProvider.error == null && authProvider.isAuthenticated) {
-        if (mounted) {
+      if (mounted) {
+        if (authProvider.error == null) {
+          // Success - show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'تم إنشاء الحساب بنجاح!', // Account created successfully!
+                'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Tajawal',
@@ -107,16 +111,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               backgroundColor: Theme.of(context).primaryColor,
+              duration: const Duration(seconds: 2),
             ),
           );
-          // TODO: Update UserProvider state upon successful sign-up/login if needed
-          // Example: Provider.of<UserProvider>(context, listen: false).loadUser();
 
-          // Navigate to the home screen after successful sign-up
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        }
-      } else if (authProvider.error != null) {
-        if (mounted) {
+          // Navigate to OTP verification screen after a short delay
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.otp,
+              arguments: {'email': email},
+            );
+          }
+        } else {
+          // Error occurred
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -128,6 +138,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               backgroundColor: Theme.of(context).colorScheme.error,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -143,7 +154,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final Color textColor = theme.textTheme.bodyLarge!.color!;
     final Color mutedTextColor = theme.hintColor;
     final Color primaryColor = theme.primaryColor;
-    final Color errorColor = theme.colorScheme.error;
 
     // Listen to AuthProvider for loading state
     final authProvider = Provider.of<AuthProvider>(context);
@@ -328,7 +338,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 InkWell(
                   onTap: () {
                     print('Continue as guest');
-                    Navigator.pushReplacementNamed(context, AppRoutes.profile);
+                    Navigator.pushReplacementNamed(context, AppRoutes.home);
                   },
                   child: Text(
                     'المتابعة كضيف',

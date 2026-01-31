@@ -11,7 +11,9 @@ import 'package:grad_project/features/quiz/presentation/widgets/multiple_choice_
 import 'package:grad_project/features/quiz/presentation/widgets/fill_in_the_blank_question_widget.dart';
 
 class QuizScreen extends StatelessWidget {
-  const QuizScreen({Key? key}) : super(key: key);
+  final String quizId;
+
+  const QuizScreen({Key? key, required this.quizId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -1,34 +1,47 @@
-// lib/features/profile/domain/entities/daily_activity_entity.dart
+// lib/features/profile/data/models/daily_activity_model.dart
 
-import 'package:equatable/equatable.dart';
+import 'package:grad_project/features/profile/domain/entities/daily_activity_entity.dart';
 
-class DailyActivityEntity extends Equatable {
-  final int lessonsCompleted; // This likely maps to ProfileScreen's 'completedLessons'
-  final int correctAnswers;
-  final int pointsEarned;
-
-  const DailyActivityEntity({
-    this.lessonsCompleted = 0,
-    this.correctAnswers = 0,
-    this.pointsEarned = 0,
+class DailyActivityModel extends DailyActivityEntity {
+  const DailyActivityModel({
+    required super.date,
+    required super.completedLessons,
+    required super.correctAnswers,
+    required super.pointsEarned,
+    required super.timeSpentMinutes,
+    required super.achievements,
   });
 
-  factory DailyActivityEntity.fromMap(Map<String, dynamic> map) {
-    return DailyActivityEntity(
-      lessonsCompleted: map['lessonsCompleted'] as int? ?? 0,
-      correctAnswers: map['correctAnswers'] as int? ?? 0,
-      pointsEarned: map['pointsEarned'] as int? ?? 0,
+  factory DailyActivityModel.fromMap(Map<String, dynamic> json) {
+    return DailyActivityModel(
+      date: DateTime.parse(json['date'] as String),
+      completedLessons: json['completedLessons'] as int,
+      correctAnswers: json['correctAnswers'] as int,
+      pointsEarned: json['pointsEarned'] as int,
+      timeSpentMinutes: json['timeS, achievements: []pentMinutes'] as int, achievements: [],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'lessonsCompleted': lessonsCompleted,
+      'date': date.toIso8601String(),
+      'completedLessons': completedLessons,
       'correctAnswers': correctAnswers,
       'pointsEarned': pointsEarned,
+      'timeSpentMinutes': timeSpentMinutes,
+      'achievements': achievements,
     };
   }
 
-  @override
-  List<Object?> get props => [lessonsCompleted, correctAnswers, pointsEarned];
+  DailyActivityEntity toEntity() {
+    return DailyActivityEntity(
+      date: date,
+      completedLessons: completedLessons,
+      correctAnswers: correctAnswers,
+      pointsEarned: pointsEarned,
+      timeSpentMinutes: timeSpentMinutes,
+      achievements: achievements,
+
+    );
+  }
 }

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart'; // Assuming UserEntity is here
+import 'package:grad_project/features/profile/domain/entities/profile_user_entity.dart'; // Assuming UserEntity is here
 
 class ProfileImageSection extends StatelessWidget {
-  final UserEntity? currentUser;
+  final ProfileUserEntity? currentUser;
   final File? imageFile;
   final Function(File) onImagePicked;
 
@@ -37,8 +37,8 @@ class ProfileImageSection extends StatelessWidget {
     ImageProvider? displayImage;
     if (imageFile != null) {
       displayImage = FileImage(imageFile!);
-    } else if (currentUser?.profileImageUrl != null && currentUser!.profileImageUrl!.isNotEmpty) {
-      displayImage = NetworkImage(currentUser!.profileImageUrl!);
+    } else if (currentUser?.avatarUrl != null && currentUser!.avatarUrl!.isNotEmpty) {
+      displayImage = NetworkImage(currentUser!.avatarUrl!);
     }
 
     return Center(

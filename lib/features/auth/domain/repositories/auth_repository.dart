@@ -1,40 +1,60 @@
-// lib/features/auth/domain/repositories/auth_repository.dart
+// lib/features/auth/domain/repositories/auth_repository.dart - ACCESS TOKEN ONLY
 
-import 'package:firebase_auth/firebase_auth.dart'; // Using Firebase User type
+import 'package:grad_project/features/auth/domain/entities/auth_user_entity.dart';
+import 'package:grad_project/core/types/auth_tokens.dart';
 
-// Abstract contract for authentication operations
 abstract class AuthRepository {
-  Future<User?> signInWithEmailAndPassword({
+  // Returns user data after successful signup
+  Future<AuthUserEntity> signUp({
+    required String fullName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  });
+
+  // OTP verification - returns void (just verifies)
+  Future<void> verifyOTP({
+    required String email,
+    required String otp,
+  });
+
+  // Resend OTP - returns void
+  Future<void> resendOTP({
+    required String email,
+  });
+
+  // Returns tokens after successful login (contains access token)
+  Future<AuthTokens> login({
     required String email,
     required String password,
   });
 
-  Future<User?> signUpWithEmailAndPassword({
-    required String email,
-    required String password,
-  });
-
-  Future<void> sendPasswordResetEmail({
+  // Forgot password - returns void (just sends email)
+  Future<void> forgotPassword({
     required String email,
   });
 
-  Future<void> signOut();
+  // Reset password - returns void
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  });
 
-  // Stream to observe authentication state changes (e.g., user logs in/out)
-  Stream<User?> get authStateChanges;
+  // Logout - returns void
+  Future<void> logout();
 
-  // Get the currently logged-in user
-  User? getCurrentUser();
+  // Get current user data
+  Future<AuthUserEntity?> getCurrentUser();
 
-// TODO: Add methods for phone authentication if you plan to implement it
-// Future<void> verifyPhoneNumber({
-//   required String phoneNumber,
-//   required Function(PhoneAuthCredential) verificationCompleted,
-//   required Function(FirebaseAuthException) verificationFailed,
-//   required Function(String, int?) codeSent,
-//   required Function(String) codeAutoRetrievalTimeout,
-// });
-// Future<User?> signInWithPhoneCredential({
-//   required PhoneAuthCredential credential,
-// });
+  // Check if user is logged in
+  Future<bool> isLoggedIn();
+
+  // Get stored access token
+  Future<String?> getAccessToken();
+
+  // Save access token locally
+  Future<void> saveAccessToken(String accessToken, {DateTime? expiry});
+
+  // Clear stored tokens
+  Future<void> clearTokens();
 }

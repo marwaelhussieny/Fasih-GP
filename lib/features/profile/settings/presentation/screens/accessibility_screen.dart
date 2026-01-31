@@ -1,5 +1,7 @@
 // lib/features/profile/settings/accessibility_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:grad_project/features/profile/presentation/providers/user_provider.dart';
 
 class AccessibilityScreen extends StatefulWidget {
   const AccessibilityScreen({Key? key}) : super(key: key);
@@ -9,13 +11,17 @@ class AccessibilityScreen extends StatefulWidget {
 }
 
 class _AccessibilityScreenState extends State<AccessibilityScreen> {
-  // State variables for the toggle switches
-  bool _listeningQuestions = true; // أسئلة السمع
-  bool _readingQuestions = true;   // أسئلة القراءة
-  bool _writingQuestions = true;   // أسئلة الكتابة
-  bool _speakingQuestions = true;  // أسئلة التحدث
-  bool _audioCues = false;        // المؤشرات الصوتية
-  bool _hapticFeedback = false;    // الحث اللمسي
+  @override
+  void initState() {
+    super.initState();
+    // Load preferences when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.preferences == null) {
+        userProvider.loadPreferences();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,84 +35,165 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
           },
         ),
       ),
-      body: ListView(
-        children: [
-          _buildAccessibilityToggle(
-            title: 'أسئلة السمع',
-            value: _listeningQuestions,
-            onChanged: (value) {
-              setState(() {
-                _listeningQuestions = value;
-                // TODO: Save preference (e.g., via a provider/use case)
-              });
-            },
-          ),
-          _buildAccessibilityToggle(
-            title: 'أسئلة القراءة',
-            value: _readingQuestions,
-            onChanged: (value) {
-              setState(() {
-                _readingQuestions = value;
-                // TODO: Save preference
-              });
-            },
-          ),
-          _buildAccessibilityToggle(
-            title: 'أسئلة الكتابة',
-            value: _writingQuestions,
-            onChanged: (value) {
-              setState(() {
-                _writingQuestions = value;
-                // TODO: Save preference
-              });
-            },
-          ),
-          _buildAccessibilityToggle(
-            title: 'أسئلة التحدث',
-            value: _speakingQuestions,
-            onChanged: (value) {
-              setState(() {
-                _speakingQuestions = value;
-                // TODO: Save preference
-              });
-            },
-          ),
-          _buildAccessibilityToggle(
-            title: 'المؤشرات الصوتية', // Audio Cues
-            value: _audioCues,
-            onChanged: (value) {
-              setState(() {
-                _audioCues = value;
-                // TODO: Save preference
-              });
-            },
-          ),
-          _buildAccessibilityToggle(
-            title: 'الحث اللمسي', // Haptic Feedback
-            value: _hapticFeedback,
-            onChanged: (value) {
-              setState(() {
-                _hapticFeedback = value;
-                // TODO: Save preference
-              });
-            },
-          ),
-        ],
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          final preferences = userProvider.preferences;
+
+          // Show loading indicator if preferences are loading
+          if (userProvider.isLoading && preferences == null) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          // Show error if failed to load preferences
+          if (userProvider.error != null && preferences == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'خطأ في تحميل الإعدادات',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    userProvider.error!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => userProvider.loadPreferences(),
+                    child: const Text('إعادة المحاولة'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Show default values if no preferences loaded yet
+          final accessibility = preferences?.accessibility;
+
+          return ListView(
+            children: [
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'أسئلة السمع',
+                value: accessibility?.hearingQuestions ?? true,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'hearingQuestions',
+                  value,
+                ),
+              ),
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'أسئلة القراءة',
+                value: accessibility?.readingQuestions ?? true,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'readingQuestions',
+                  value,
+                ),
+              ),
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'أسئلة الكتابة',
+                value: accessibility?.writingQuestions ?? true,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'writingQuestions',
+                  value,
+                ),
+              ),
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'أسئلة التحدث',
+                value: accessibility?.speakingQuestions ?? true,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'speakingQuestions',
+                  value,
+                ),
+              ),
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'المؤشرات الصوتية', // Audio Cues
+                value: accessibility?.soundEffects ?? false,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'soundEffects',
+                  value,
+                ),
+              ),
+              _buildAccessibilityToggle(
+                context: context,
+                title: 'الحث اللمسي', // Haptic Feedback
+                value: accessibility?.hapticFeedback ?? false,
+                onChanged: (value) => _updateAccessibilitySetting(
+                  context,
+                  'hapticFeedback',
+                  value,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildAccessibilityToggle({
+    required BuildContext context,
     required String title,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return ListTile(
-      title: Text(title),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        return ListTile(
+          title: Text(title),
+          trailing: Switch(
+            value: value,
+            onChanged: userProvider.isLoading ? null : onChanged,
+          ),
+        );
+      },
     );
+  }
+
+  Future<void> _updateAccessibilitySetting(
+      BuildContext context,
+      String key,
+      bool value,
+      ) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    try {
+      await userProvider.updateAccessibilityPreference(key, value);
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم تحديث الإعدادات بنجاح'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('خطأ في تحديث الإعدادات: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

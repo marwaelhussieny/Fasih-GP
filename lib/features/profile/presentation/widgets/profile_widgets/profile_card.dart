@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:grad_project/features/profile/domain/entities/user_entity.dart';
+import 'package:grad_project/features/profile/domain/entities/profile_user_entity.dart';
 import 'package:grad_project/core/navigation/app_routes.dart'; // For navigation
 
 class ProfileCard extends StatelessWidget {
-  final UserEntity user;
+  final ProfileUserEntity user;
 
   const ProfileCard({
     Key? key,
@@ -45,10 +45,10 @@ class ProfileCard extends StatelessWidget {
             child: CircleAvatar(
               radius: 50.r, // Responsive size
               backgroundColor: primaryColor.withOpacity(0.1), // Subtle background
-              backgroundImage: user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty
-                  ? NetworkImage(user.profileImageUrl!)
+              backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                  ? NetworkImage(user.avatarUrl!)
                   : null,
-              child: user.profileImageUrl == null || user.profileImageUrl!.isEmpty
+              child: user.avatarUrl == null || user.avatarUrl!.isEmpty
                   ? Icon(Icons.person, size: 50.r, color: primaryColor) // Themed icon
                   : null,
             ),
@@ -64,7 +64,7 @@ class ProfileCard extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            user.email,
+            user.email??"",
             style: theme.textTheme.bodyMedium?.copyWith(
               color: mutedTextColor,
               fontSize: 14.sp, // Responsive font size

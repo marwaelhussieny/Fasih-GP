@@ -1,6 +1,5 @@
-// lib/features/auth/domain/usecases/get_auth_state_changes_usecase.dart
 
-import 'package:firebase_auth/firebase_auth.dart';
+// lib/features/auth/domain/usecases/get_auth_state_changes_usecase.dart
 import 'package:grad_project/features/auth/domain/repositories/auth_repository.dart';
 
 class GetAuthStateChangesUseCase {
@@ -8,7 +7,12 @@ class GetAuthStateChangesUseCase {
 
   GetAuthStateChangesUseCase({required this.repository});
 
-  Stream<User?> call() {
-    return repository.authStateChanges;
+  Future<String?> call() async {
+    try {
+      final user = await repository.getCurrentUser();
+      return user?.id;
+    } catch (e) {
+      return null;
+    }
   }
 }
