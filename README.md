@@ -20,14 +20,12 @@ think duolingo meets GPT, but designed specifically for arabic. with actual ling
 
 ## the core idea
 
-### إعرابلي (i'rabli) - the heart of everything
+### إعربلي (i'rabli) - the heart of everything
 
 write any word in any text. our AI instantly gives you:
 - complete grammatical breakdown (إعراب)
 - word roots and morphology (الصرف)
 - rhetorical devices (البلاغة)
-- historical context
-- quranic interpretations (تفسير)
 
 no more flipping through 5 different books. no more confusion. just instant, accurate linguistic analysis.
 
